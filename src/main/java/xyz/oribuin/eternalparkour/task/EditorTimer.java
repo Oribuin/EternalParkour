@@ -69,14 +69,14 @@ public class EditorTimer extends BukkitRunnable {
     }
 
     private List<Location> getCube(Region region) {
-        // Get the lowest and highest points
+        // Get the first & second corner of the region
         Location pos1 = region.getPos1();
         Location pos2 = region.getPos2();
 
         if (pos1 == null || pos2 == null)
             return new ArrayList<>();
 
-        pos1 = pos1.clone().add(1, 1, 1);
+        
         return PluginUtils.getCube(pos1, pos2, 0.5);
     }
 
