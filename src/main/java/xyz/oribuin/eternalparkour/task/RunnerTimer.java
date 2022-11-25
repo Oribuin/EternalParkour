@@ -27,7 +27,7 @@ public class RunnerTimer extends BukkitRunnable {
     private final String timerMessage;
     private final boolean useMiniMessage;
 
-    private final SimpleDateFormat formatter = new SimpleDateFormat("mm:ss:SSS");
+    private final SimpleDateFormat formatter = new SimpleDateFormat("mm:ss.SSS");
 
     public RunnerTimer(EternalParkour plugin) {
         this.manager = plugin.getManager(ParkourManager.class);

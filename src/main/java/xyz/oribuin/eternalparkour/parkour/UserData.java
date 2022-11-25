@@ -15,7 +15,6 @@ public class UserData {
     private long bestTime; // The best time the user has completed the level in
     private long lastTime; // The last time the user completed the level in
     private long lastCompletion; // The last time the user completed the level
-    private boolean hidingPlayers; // Whether to hide other players in the level
     private List<Long> totalTimes; // List of all times the user has completed the level in
 
     public UserData(@NotNull UUID player, @NotNull String level) {
@@ -26,7 +25,6 @@ public class UserData {
         this.bestTime = 0L;
         this.lastTime = 0L;
         this.lastCompletion = 0L;
-        this.hidingPlayers = false;
         this.totalTimes = new ArrayList<>();
     }
 
@@ -76,14 +74,6 @@ public class UserData {
 
     public void setLastCompletion(long lastCompletion) {
         this.lastCompletion = lastCompletion;
-    }
-
-    public boolean isHidingPlayers() {
-        return hidingPlayers;
-    }
-
-    public void setHidingPlayers(boolean hidingPlayers) {
-        this.hidingPlayers = hidingPlayers;
     }
 
     public List<Long> getTotalTimes() {

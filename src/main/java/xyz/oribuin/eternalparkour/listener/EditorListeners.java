@@ -16,7 +16,6 @@ import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
-import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,9 +114,6 @@ public class EditorListeners implements Listener {
      * @param block   The block the player clicked
      */
     private void editCheckpoint(Player player, EditSession session, Block block) {
-
-        System.out.println("Editing checkpoints");
-
         var level = session.getLevel();
         var checkpoints = level.getCheckpoints();
 

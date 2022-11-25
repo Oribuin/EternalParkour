@@ -9,7 +9,6 @@ import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
-import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +74,7 @@ public class EditorTimer extends BukkitRunnable {
 
         if (pos1 == null || pos2 == null)
             return new ArrayList<>();
+
 
         return this.getCube(pos1, pos2, 0.5, 1.0);
     }

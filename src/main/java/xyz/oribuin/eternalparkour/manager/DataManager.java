@@ -67,27 +67,26 @@ public class DataManager extends AbstractDataManager {
 
         this.async(task -> this.databaseConnector.connect(connection -> {
             for (var entry : data.values()) {
-                final var update = "UPDATE " + this.getTablePrefix() + "data SET completed = ?, " +
-                        "attempts = ?, " +
-                        "bestTime = ?, " +
-                        "lastTime = ?," +
-                        "lastCompletion = ?," +
-                        "hidingPlayers = ? " +
-                        "totalTimes = ? " +
-                        "WHERE player = ? " +
-                        "AND level = ?";
-
+                final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                        "player, " +
+                        "`level`, " +
+                        "completed, " +
+                        "attempts, " +
+                        "bestTime, " +
+                        "lastTime, " +
+                        "lastCompletion, " +
+                        "totalTimes) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                 try (var statement = connection.prepareStatement(update)) {
-                    statement.setInt(1, entry.getCompleted());
-                    statement.setInt(2, entry.getAttempts());
-                    statement.setLong(3, entry.getBestTime());
-                    statement.setLong(4, entry.getLastTime());
-                    statement.setLong(5, entry.getLastCompletion());
-                    statement.setBoolean(6, entry.isHidingPlayers());
-                    statement.setString(7, this.gson.toJson(new TimesCompleted(entry.getTotalTimes())));
-                    statement.setString(8, entry.getPlayer().toString());
-                    statement.setString(9, entry.getLevel().toLowerCase());
+                    statement.setString(1, entry.getPlayer().toString());
+                    statement.setString(2, entry.getLevel().toLowerCase());
+                    statement.setInt(3, entry.getCompleted());
+                    statement.setInt(4, entry.getAttempts());
+                    statement.setLong(5, entry.getBestTime());
+                    statement.setLong(6, entry.getLastTime());
+                    statement.setLong(7, entry.getLastCompletion());
+                    statement.setString(8, this.gson.toJson(new TimesCompleted(entry.getTotalTimes())));
                     statement.executeUpdate();
                 }
             }
@@ -111,9 +110,8 @@ public class DataManager extends AbstractDataManager {
                     "bestTime, " +
                     "lastTime, " +
                     "lastCompletion, " +
-                    "hidingPlayers, " +
                     "totalTimes) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (var statement = connection.prepareStatement(update)) {
                 statement.setString(1, data.getPlayer().toString());
@@ -123,8 +121,7 @@ public class DataManager extends AbstractDataManager {
                 statement.setLong(5, data.getBestTime());
                 statement.setLong(6, data.getLastTime());
                 statement.setLong(7, data.getLastCompletion());
-                statement.setBoolean(8, data.isHidingPlayers());
-                statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
+                statement.setString(8, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                 statement.executeUpdate();
             }
         }));
@@ -242,8 +239,7 @@ public class DataManager extends AbstractDataManager {
                     data.setBestTime(results.getLong("bestTime"));
                     data.setLastTime(results.getLong("lastTime"));
                     data.setLastCompletion(results.getLong("lastCompletion"));
-                    data.setHidingPlayers(results.getBoolean("hidingPlayers"));
-                    data.setTotalTimes(this.gson.fromJson(results.getString("totalTimes"), TimesCompleted.class).times());
+                    data.setTotalTimes(this.gson.fromJson(results.getString("totalTimes"), TimesCompleted.class).getTimes());
                     this.userData.computeIfAbsent(uuid, k -> new HashMap<>()).put(data.getLevel(), data);
                 }
             }
@@ -265,9 +261,8 @@ public class DataManager extends AbstractDataManager {
                             "bestTime, " +
                             "lastTime, " +
                             "lastCompletion, " +
-                            "hidingPlayers, " +
                             "totalTimes) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                     try (var statement = connection.prepareStatement(update)) {
                         statement.setString(1, data.getPlayer().toString());
@@ -277,8 +272,7 @@ public class DataManager extends AbstractDataManager {
                         statement.setLong(5, data.getBestTime());
                         statement.setLong(6, data.getLastTime());
                         statement.setLong(7, data.getLastCompletion());
-                        statement.setBoolean(8, data.isHidingPlayers());
-                        statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
+                        statement.setString(8, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                         statement.executeUpdate();
                     }
                 }
@@ -306,9 +300,8 @@ public class DataManager extends AbstractDataManager {
                             "bestTime, " +
                             "lastTime, " +
                             "lastCompletion, " +
-                            "hidingPlayers, " +
                             "totalTimes) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                     try (var statement = connection.prepareStatement(update)) {
                         statement.setString(1, data.getPlayer().toString());
@@ -318,8 +311,7 @@ public class DataManager extends AbstractDataManager {
                         statement.setLong(5, data.getBestTime());
                         statement.setLong(6, data.getLastTime());
                         statement.setLong(7, data.getLastCompletion());
-                        statement.setBoolean(8, data.isHidingPlayers());
-                        statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
+                        statement.setString(8, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                         statement.executeUpdate();
                     }
                 }

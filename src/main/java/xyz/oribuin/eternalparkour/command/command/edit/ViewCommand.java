@@ -12,7 +12,6 @@ import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
-import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 public class ViewCommand extends RoseSubCommand {
 

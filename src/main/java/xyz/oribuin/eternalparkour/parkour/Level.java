@@ -3,6 +3,8 @@ package xyz.oribuin.eternalparkour.parkour;
 import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import xyz.oribuin.eternalparkour.action.Action;
+import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,7 +19,7 @@ public class Level {
     private @NotNull List<Region> levelRegions; // List of regions for the level
     private @Nullable Region finishRegion; // Region that the player must stand in to finish the level
     private @NotNull Map<Integer, Location> checkpoints; // Map of checkpoints for the level
-    private @NotNull List<String> commands; // Commands to run when the player finishes the level
+    private @NotNull List<Action> commands; // Commands to run when the player finishes the level
     private long averageTime; // Average time to complete the level
     private int timesCompleted; // Times the level has been completed
     private @NotNull Map<Integer, UserData> topUsers; // Top users who have completed the level
@@ -90,6 +92,22 @@ public class Level {
         return this.finishRegion != null && this.finishRegion.equals(region);
     }
 
+    /**
+     * Get the checkpoint at a location in the level.
+     *
+     * @param location The location to check.
+     * @return The checkpoint id
+     */
+    public Map.Entry<Integer, Location> getCheckpoint(@NotNull Location location) {
+        // check if location is inside a checkpoint
+        for (var entry : this.checkpoints.entrySet()) {
+            if (entry.getValue().distance(location) < 1)
+                return entry;
+        }
+
+        return null;
+    }
+
 
     public @NotNull String getId() {
         return id;
@@ -131,11 +149,11 @@ public class Level {
         this.checkpoints = checkpoints;
     }
 
-    public @NotNull List<String> getCommands() {
+    public @NotNull List<Action> getCommands() {
         return commands;
     }
 
-    public void setCommands(@NotNull List<String> commands) {
+    public void setCommands(@NotNull List<Action> commands) {
         this.commands = commands;
     }
 

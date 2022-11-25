@@ -3,9 +3,6 @@ package xyz.oribuin.eternalparkour.util;
 import org.bukkit.Location;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class PluginUtils {
 
     public PluginUtils() {
@@ -118,6 +115,13 @@ public final class PluginUtils {
             return null;
 
         return new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    }
+
+    public static @Nullable Location asCenterLoc(@Nullable Location location) {
+        if (location == null)
+            return null;
+
+        return new Location(location.getWorld(), location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
     }
 
 

@@ -1,6 +1,7 @@
 package xyz.oribuin.eternalparkour.listener;
 
 import org.bukkit.GameMode;
+import org.bukkit.Sound;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -12,8 +13,6 @@ import xyz.oribuin.eternalparkour.event.PlayerFinishLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerStartLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerSwitchRegionEvent;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
-import xyz.oribuin.eternalparkour.parkour.Level;
-import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
 
 /**
@@ -46,16 +45,18 @@ public class RegionListeners implements Listener {
 
             // If the player is not in a level, but was in one before, then they have exited the level.
             if (from != null) {
-                var region = from.getRegionAt(event.getFrom());
-                // Don't know why this would be null, but just in case.
-                if (region == null)
+                if (!from.isEnabled()) // The level is disabled, so do not run the exit event.
                     return;
 
-                this.plugin.getLogger().info(String.format("%s left region %s in level %s", player.getName(), this.getRegionType(from, region), from.getId()));
                 if (this.manager.isPlaying(player.getUniqueId())) {
                     this.manager.failRun(player, true);
                     return;
                 }
+
+                var region = from.getRegionAt(event.getFrom());
+                // Don't know why this would be null, but just in case.
+                if (region == null)
+                    return;
 
                 this.manager.cancelRun(player, false);
                 this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, region, from));
@@ -64,6 +65,9 @@ public class RegionListeners implements Listener {
 
             return;
         }
+
+        if (!level.isEnabled()) // The level is disabled, so do not run any events.
+            return;
 
         // Get the player's current region.
         var region = level.getRegionAt(event.getTo());
@@ -76,7 +80,6 @@ public class RegionListeners implements Listener {
 
         // Signify that a player has left a region.
         if (region == null && fromRegion != null) {
-            this.plugin.getLogger().info(String.format("%s left region %s in level %s", player.getName(), this.getRegionType(level, fromRegion), level.getId()));
             if (this.manager.isPlaying(player.getUniqueId())) {
                 this.manager.failRun(player, true);
                 return;
@@ -88,7 +91,6 @@ public class RegionListeners implements Listener {
 
         // Signify that a player has switched regions. (This is not the same as entering a region)
         if (region != null && fromRegion != null && !region.equals(fromRegion)) {
-            this.plugin.getLogger().info(String.format("%s switched regions from %s -> %s in level %s", player.getName(), this.getRegionType(level, fromRegion), this.getRegionType(level, region), level.getId()));
 
             // Make sure the player is not entering just a different region in the same level,
             // we're trying to pretend like they're the same region
@@ -107,22 +109,35 @@ public class RegionListeners implements Listener {
             return;
         }
 
-        var session = this.manager.getRun(player);
+        var session = this.manager.getRunSession(player);
         if (fromRegion == null || region == null) // The player has switched regions.
             return;
 
+        if (level.getCheckpoints().size() > 0) {
+            var checkpoint = level.getCheckpoint(player.getLocation());
+            if (this.manager.isPlaying(player.getUniqueId()) && checkpoint != null ) {
+
+                // Don't change the checkpoint if it was already hit
+                if (session.getCheckpoint() != null && checkpoint.getKey() <= session.getCheckpoint().getKey()) {
+                    return;
+                }
+
+                player.playSound(player, Sound.ENTITY_ARROW_HIT_PLAYER, 100, 1);
+                session.setCheckpoint(checkpoint);
+                this.manager.saveRunSession(session);
+                return;
+            }
+        }
+
         // Check if the player is going from parkour region -> finish region.
         if (level.isParkourRegion(fromRegion) && level.isFinishRegion(region) && session != null) {
-            this.plugin.getLogger().info(String.format("%s finished the level", event.getPlayer().getName()));
             this.manager.finishRun(player);
             this.plugin.getServer().getPluginManager().callEvent(new PlayerFinishLevelEvent(player, level, session));
-
             return;
         }
 
         // Check if the player went from a start region to a parkour region.
         if (level.isStartRegion(fromRegion) && level.isParkourRegion(region) && session == null) {
-            this.plugin.getLogger().info(String.format("%s started the level", player.getName()));
             session = this.manager.startRun(player, level);
             if (session != null) {
                 this.plugin.getServer().getPluginManager().callEvent(new PlayerStartLevelEvent(player, level, session));
@@ -131,30 +146,19 @@ public class RegionListeners implements Listener {
 
         // Check if a player went from a parkour region to a start region.
         if (level.isParkourRegion(fromRegion) && level.isStartRegion(region) && session != null) {
-            this.plugin.getLogger().info(String.format("%s went back into the start the level", player.getName()));
             this.manager.cancelRun(player, false);
         }
 
     }
 
-    public String getRegionType(Level level, Region region) {
-        if (level.isStartRegion(region))
-            return "Start";
-
-        if (level.isParkourRegion(region))
-            return "Parkour";
-
-        if (level.isFinishRegion(region))
-            return "Finish";
-
-        return "Unknown";
-    }
-
     @EventHandler(ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
         // We cancel the run if a player teleports.
+        if (event.getCause() == PlayerTeleportEvent.TeleportCause.PLUGIN) {
+            return;
+        }
+
         if (this.manager.isPlaying(event.getPlayer().getUniqueId())) {
-            this.plugin.getLogger().info(String.format("%s teleported, cancelling run", event.getPlayer().getName()));
             this.manager.cancelRun(event.getPlayer(), false);
         }
     }

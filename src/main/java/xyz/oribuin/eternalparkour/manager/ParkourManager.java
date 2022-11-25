@@ -3,15 +3,16 @@ package xyz.oribuin.eternalparkour.manager;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.config.CommentedFileConfiguration;
 import dev.rosewood.rosegarden.manager.Manager;
-import dev.rosewood.rosegarden.utils.HexUtils;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import xyz.oribuin.eternalparkour.hook.PAPI;
+import xyz.oribuin.eternalparkour.action.PluginAction;
+import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
@@ -22,11 +23,14 @@ import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -34,10 +38,14 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class ParkourManager extends Manager {
 
+    // Map of all levels
     private final Map<String, Level> levelData = new HashMap<>(); // All level data
     private final Map<UUID, EditSession> levelEditors = new HashMap<>(); // List of players editing a level
     private final Map<UUID, RunSession> activeRunners = new HashMap<>(); // List of players currently running a parkour
 
+    // Other ~ funny ~ stuff
+    private final DataManager dataManager = this.rosePlugin.getManager(DataManager.class);
+    private final SimpleDateFormat formatter = new SimpleDateFormat("mm:ss.SSS");
     private CommentedFileConfiguration levelConfig;
 
     public ParkourManager(RosePlugin rosePlugin) {
@@ -60,6 +68,7 @@ public class ParkourManager extends Manager {
 
         this.levelConfig = CommentedFileConfiguration.loadConfiguration(file);
         this.loadLevels();
+        this.dataManager.loadUserData();
     }
 
     /**
@@ -180,7 +189,11 @@ public class ParkourManager extends Manager {
 
             // Load the commands
             var commands = levels.getStringList(key + ".commands");
-            level.setCommands(commands);
+            level.setCommands(
+                    commands.stream().map(PluginAction::parse)
+                            .filter(Objects::nonNull)
+                            .toList()
+            );
 
             // Load reward cooldown
             var cooldown = levels.getInt(key + ".cooldown");
@@ -217,8 +230,13 @@ public class ParkourManager extends Manager {
         // Save the level data
         this.levelConfig.set(startPath + ".enabled", level.isEnabled());
         this.levelConfig.set(startPath + ".cooldown", level.getCooldown());
-        this.levelConfig.set(startPath + ".commands", level.getCommands());
         this.levelConfig.set(startPath + ".times-completed", level.getTimesCompleted());
+
+        // Save the commands to run
+        this.levelConfig.set(startPath + ".commands", level.getCommands().stream()
+                .map(PluginAction::serialize)
+                .toList()
+        );
 
         // Get region index
         AtomicInteger currentIndex = new AtomicInteger(0);
@@ -315,7 +333,7 @@ public class ParkourManager extends Manager {
         this.levelConfig.save();
 
         // Delete all the level data from the database
-        this.rosePlugin.getManager(DataManager.class).deleteLevel(level.getId());
+        this.dataManager.deleteLevel(level.getId());
     }
 
     /**
@@ -372,7 +390,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public UserData getUser(@NotNull UUID uuid, @NotNull String level) {
-        return this.rosePlugin.getManager(DataManager.class).getData(uuid, level);
+        return this.dataManager.getData(uuid, level);
     }
 
     /**
@@ -383,7 +401,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public Map<String, UserData> getUser(@NotNull UUID uuid) {
-        return this.rosePlugin.getManager(DataManager.class).getData(uuid);
+        return this.dataManager.getData(uuid);
     }
 
     /**
@@ -392,7 +410,7 @@ public class ParkourManager extends Manager {
      * @param userData The player's level data
      */
     public void saveUserData(@NotNull UserData userData) {
-        this.rosePlugin.getManager(DataManager.class).saveUser(userData);
+        this.dataManager.saveUser(userData);
     }
 
     /**
@@ -401,7 +419,7 @@ public class ParkourManager extends Manager {
      * @param userData The player's level data
      */
     public void deleteUserData(@NotNull UserData userData) {
-        this.rosePlugin.getManager(DataManager.class).deleteUser(userData);
+        this.dataManager.deleteUser(userData);
     }
 
     /**
@@ -410,7 +428,7 @@ public class ParkourManager extends Manager {
      * @param uuid The uuid of the player
      */
     public void deleteUser(@NotNull UUID uuid) {
-        this.rosePlugin.getManager(DataManager.class).deleteUser(uuid);
+        this.dataManager.deleteUser(uuid);
     }
 
     /**
@@ -419,7 +437,7 @@ public class ParkourManager extends Manager {
      * @param userData The player's level data
      */
     public void cacheUser(@NotNull UserData userData) {
-        this.rosePlugin.getManager(DataManager.class).cacheUser(userData);
+        this.dataManager.cacheUser(userData);
     }
 
     /**
@@ -507,7 +525,6 @@ public class ParkourManager extends Manager {
     public Level getLevel(@NotNull Location location) {
         return this.levelData.values().stream()
                 .filter(level -> level.getRegionAt(location) != null)
-                .filter(obj -> true)
                 .findFirst()
                 .orElse(null);
     }
@@ -527,34 +544,45 @@ public class ParkourManager extends Manager {
      *
      * @param level The level
      */
-    public void calculateLevel(@NotNull Level level) {
+    public Level calculateLevel(@NotNull Level level) {
         // Get all players who have completed the level
-        List<UserData> levelData = this.rosePlugin.getManager(DataManager.class).getLevelData(level.getId());
+        List<UserData> levelData = this.dataManager.getLevelData(level.getId());
 
-        // Calculate average best time completions
-        long averageBestTime = (long) levelData.stream()
-                .filter(userData -> userData.getBestTime() != -1)
-                .mapToLong(UserData::getBestTime)
+        // Calculate average total time completions
+        var times = new ArrayList<Long>();
+
+        for (UserData userData : levelData) {
+            times.addAll(userData.getTotalTimes());
+        }
+
+        long averageBestTime = (long) times.stream()
+                .mapToLong(Long::longValue)
                 .average()
-                .orElse(-1);
+                .orElse(0);
+
+//        long averageBestTime = (long) levelData.stream()
+//                .filter(userData -> userData.getBestTime() != -1)
+//                .mapToLong(UserData::getBestTime)
+//                .average()
+//                .orElse(-1);
 
         level.setAverageTime(averageBestTime);
 
         // Calculate the top times for the level into Map<Integer, UserData>
         Map<Integer, UserData> topTimes = new HashMap<>();
-        for (int i = 1; i <= 10; i++) {
-            UserData userData = levelData.stream()
-                    .filter(data -> data.getBestTime() != -1)
-                    .min(Comparator.comparingLong(UserData::getBestTime))
-                    .orElse(null);
+        var sortedTimes = levelData.stream()
+                .filter(userData -> userData.getBestTime() != -1)
+                .sorted(Comparator.comparingLong(UserData::getBestTime))
+                .limit(Setting.LEADERBOARD_MAX_SIZE.getInt())
+                .toList();
 
-            if (userData != null) {
-                topTimes.put(i, userData);
-                levelData.remove(userData);
-            }
+        for (int i = 0; i < sortedTimes.size(); i++) {
+            topTimes.put(i + 1, sortedTimes.get(i));
         }
 
         level.setTopUsers(topTimes);
+        this.cacheLevel(level);
+        return level;
     }
 
     /**
@@ -568,7 +596,6 @@ public class ParkourManager extends Manager {
 
         // Check if the player is already playing a level, if so cancel the run
         if (this.isPlaying(player.getUniqueId())) {
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " is already playing a level, cancelling run");
             this.cancelRun(player, false);
         }
 
@@ -583,7 +610,6 @@ public class ParkourManager extends Manager {
 
         // Check if the player is in the level's finish region
         if (this.isFinished(level, player.getLocation()) && this.isPlaying(player.getUniqueId())) {
-            this.rosePlugin.getLogger().warning("Player " + player.getName() + " is already at the finish region of level " + level.getId());
             this.finishRun(player);
             return null;
         }
@@ -607,7 +633,6 @@ public class ParkourManager extends Manager {
         var level = this.getPlayingLevel(player.getUniqueId());
         // Player is not playing a level
         if (level == null) {
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " is not playing a level (finishRun)");
             return;
         }
 
@@ -633,47 +658,47 @@ public class ParkourManager extends Manager {
             this.teleport(player, level.getTeleport());
 
         // Check if the player has finished the level before the cooldown ends
-        if (System.currentTimeMillis() - data.getLastCompletion() > level.getCooldown())
-            level.getCommands().forEach(command -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), HexUtils.colorify(PAPI.apply(player, command))));
+        if (System.currentTimeMillis() - data.getLastCompletion() > level.getCooldown()) {
+            var plc = StringPlaceholders.single("cooldown", PluginUtils.parseFromTime(System.currentTimeMillis() - level.getCooldown()));
+            level.getCommands().forEach(command -> command.execute(player, plc));
+        }
+
+        var completionTime = (parkourRun.getEndTime() - parkourRun.getStartTime());
 
         // Update the player's data
-        data.setLastTime(parkourRun.getEndTime() - parkourRun.getStartTime());
+        data.setLastTime(completionTime);
         data.setLastCompletion(parkourRun.getEndTime());
         data.setAttempts(data.getAttempts() + 1);
         data.setCompleted(data.getCompleted() + 1);
         data.getTotalTimes().add(data.getLastTime());
 
-        if (data.getBestTime() < data.getLastTime()) {
-            data.setBestTime(data.getLastTime());
-            this.saveUserData(data);
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " has completed level " + level.getId() + " with a new best time of " + data.getLastTime());
-        } else {
+        final var plc = StringPlaceholders.builder()
+                .addPlaceholder("level", level.getId())
+                .addPlaceholder("time", formatter.format(new Date(completionTime)))
+                .addPlaceholder("completion", data.getCompleted())
+                .addPlaceholder("attempts", data.getAttempts())
+                .addPlaceholder("best", formatter.format(new Date(data.getBestTime())))
+                .build();
+
+        boolean newBestTime = false;
+        if (completionTime > data.getBestTime() && data.getBestTime() != 0) {
             this.cacheUser(data);
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " has completed level " + level.getId() + " with a time of " + data.getLastTime());
+        } else {
+            newBestTime = true;
+            data.setBestTime(completionTime);
+            this.cacheUser(data);
         }
 
         // Update the level's data
         level.setTimesCompleted(level.getTimesCompleted() + 1);
-
         this.saveLevel(level);
 
-        final var plc = StringPlaceholders.builder()
-                .addPlaceholder("level", level.getId())
-                .addPlaceholder("time", PluginUtils.parseFromTime(parkourRun.getEndTime() - parkourRun.getStartTime()))
-                .addPlaceholder("completion", data.getCompleted())
-                .addPlaceholder("attempts", data.getAttempts())
-                .addPlaceholder("best", PluginUtils.parseFromTime(data.getBestTime()))
-                .build();
+        if (newBestTime) {
+            locale.sendMessage(player, "parkour-finish-new-best", plc);
+        } else {
+            locale.sendMessage(player, "parkour-finish", plc);
+        }
 
-//
-//        // Check if the player has a new best time
-//        if (data.getBestTime() == data.getLastTime()) {
-//            // Send new best time message here
-//            this.rosePlugin.getLogger().info("Player " + player.getName() + " has a new best time of " + data.getBestTime() + " in level " + level.getId());
-//        } else {
-//            // Send finish message here
-//            this.rosePlugin.getLogger().info("Player " + player.getName() + " has finished level " + level.getId() + " in " + data.getLastTime() + "ms");
-//        }
 
     }
 
@@ -691,7 +716,6 @@ public class ParkourManager extends Manager {
         }
 
         // Send cancel message here
-        this.rosePlugin.getLogger().info("Player " + player.getName() + " has cancelled their run in level " + run.getLevel().getId());
         this.activeRunners.remove(player.getUniqueId());
 
         if (run.getLevel().getTeleport() != null && teleport)
@@ -707,7 +731,7 @@ public class ParkourManager extends Manager {
     public void failRun(@NotNull Player player, boolean teleport) {
         // Player is not playing a level
         var level = this.getPlayingLevel(player.getUniqueId());
-        var session = this.getRun(player.getUniqueId());
+        var session = this.getRunSession(player.getUniqueId());
         // Player is not playing a level
         if (level == null) {
             return;
@@ -715,12 +739,9 @@ public class ParkourManager extends Manager {
 
         // Teleport the player back to the checkpoint if they have one
         var checkpoint = session.getCheckpoint();
-        if (level.getCheckpoints().size() > 0 && session.getCheckpoint() <= 0) {
-            var checkpointLocation = level.getCheckpoints().get(0);
-            if (checkpointLocation != null) {
-                this.teleport(player, checkpointLocation);
-                return;
-            }
+        if (level.getCheckpoints().size() > 0 && checkpoint != null) {
+            this.teleport(player, PluginUtils.asCenterLoc(checkpoint.getValue()));
+            return;
         }
 
         // Update the player's data
@@ -731,7 +752,6 @@ public class ParkourManager extends Manager {
         data.setAttempts(data.getAttempts() + 1);
 
         // Send fail message here
-        this.rosePlugin.getLogger().info("Player " + player.getName() + " has failed their run in level " + level.getId());
         this.activeRunners.remove(player.getUniqueId());
         if (level.getTeleport() != null && teleport)
             this.teleport(player, level.getTeleport());
@@ -745,11 +765,11 @@ public class ParkourManager extends Manager {
      */
     public void teleport(@NotNull Player player, @NotNull Location location) {
         if (PluginUtils.usingPaper()) {
-            player.teleportAsync(location);
+            player.teleportAsync(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
             return;
         }
 
-        player.teleport(location);
+        player.teleport(location, PlayerTeleportEvent.TeleportCause.PLUGIN);
     }
 
     /**
@@ -758,7 +778,7 @@ public class ParkourManager extends Manager {
      * @param player The player
      * @return The player's parkour run
      */
-    public RunSession getRun(@NotNull Player player) {
+    public RunSession getRunSession(@NotNull Player player) {
         return this.activeRunners.get(player.getUniqueId());
     }
 
@@ -768,8 +788,32 @@ public class ParkourManager extends Manager {
      * @param uuid The player's UUID
      * @return The player's parkour run
      */
-    public RunSession getRun(@NotNull UUID uuid) {
+    public RunSession getRunSession(@NotNull UUID uuid) {
         return this.activeRunners.get(uuid);
+    }
+
+    /**
+     * Cache a player's current run session
+     *
+     * @param session The session
+     */
+    public void saveRunSession(@NotNull RunSession session) {
+        this.activeRunners.put(session.getPlayer(), session);
+    }
+
+    /**
+     * End a player's parkour run
+     *
+     * @param player The player
+     * @return The player's parkour run
+     */
+    public boolean endRunSession(@NotNull Player player) {
+        var session = this.getRunSession(player);
+        if (session == null)
+            return false;
+
+        this.activeRunners.remove(player.getUniqueId());
+        return true;
     }
 
     /**
@@ -845,6 +889,26 @@ public class ParkourManager extends Manager {
 
         // Save the level
         this.saveLevel(cacheLevel);
+    }
+
+
+    /**
+     * Get all the users inside a level
+     *
+     * @param level The level
+     * @return The users
+     */
+    public Map<UUID, UserData> getUsersInLevel(Level level) {
+        Map<UUID, UserData> users = new HashMap<>();
+        for (var user : this.activeRunners.values()) {
+            if (!user.getLevel().getId().equals(level.getId()))
+                return users;
+
+            var data = this.getUser(user.getPlayer(), level.getId());
+            users.put(user.getPlayer(), data);
+        }
+
+        return users;
     }
 
     @Override

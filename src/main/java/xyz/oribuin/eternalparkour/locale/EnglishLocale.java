@@ -81,16 +81,20 @@ public class EnglishLocale implements Locale {
             this.put("command-edit-teleport-success", "You have successfully changed teleport location of [#00B4DB%name%&f] to [#00B4DB%location%&f].");
 
             this.put("#17", "Edit Command - View Command");
-            this.put("command-edit-view-start", "Now viewing the level [#00B4DB%name%&f].");
+            this.put("command-edit-view-success", "Now viewing the level [#00B4DB%name%&f].");
 
-            this.put("#18", "List Command");
-            this.put("command-list-description", "List all parkour levels.");
-            this.put("command-list-title", "&fAvailable Parkour Levels:");
-            this.put("command-list-format", "&8 - #00B4DB%name% &7- %desc%");
+            this.put("#18", "Leaderboard Command");
+            this.put("command-lead-description", "Show the leaderboard for a level");
+            this.put("command-lead-header", "&f&lTop 10 Players for #00B4DB%id%");
+            this.put("command-lead-entry", "&f#%rank% &8- #00B4DB%player% &f- #00B4DB%time% &7[%completed%]");
 
             this.put("#19", "General Parkour Messages");
             this.put("region-not-found", "You are not in the correct region to do this.");
+            this.put("parkour-finish", "You have finished the parkour level [#00B4DB%level%&f] in #00B4DB%time%&f.");
+            this.put("parkour-finish-new-best", "You have beat your person best for [#00B4DB%level%&f] in #00B4DB%time%&f! Your previous best was #00B4DB%best%&f.");
 
+            this.put("#20", "Argument Handler Messages");
+            this.put("argument-handler-level", "Parkour Level [%input%] doesn't exist.");
         }};
     }
 
