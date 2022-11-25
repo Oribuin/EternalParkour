@@ -45,7 +45,14 @@ public class Level {
      * @return The region at the location.
      */
     public @Nullable Region getRegionAt(@NotNull Location location) {
-        for (var region : this.levelRegions) {
+        var allRegions = new ArrayList<>(this.levelRegions);
+        if (this.startRegion != null)
+            allRegions.add(this.startRegion);
+
+        if (this.finishRegion != null)
+            allRegions.add(this.finishRegion);
+
+        for (var region : allRegions) {
             if (region.isInside(location))
                 return region;
         }

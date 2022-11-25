@@ -15,9 +15,9 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
         // Active running settings
         RUNNER_TIME_ENABLED("runner-time.enabled", true, "Should the current time be shown on the runner's HUD?"),
-        RUNNER_TIMER_INTERVAL("runner-timer.interval", 3, "The amount of ticks between runner timer updates (Actionbar Message)."),
-        RUNNER_TIMER_USE_MINIMESSAGE("runner-timer.use-minimessage", true, "Use MiniMessage for the runner timer actionbar message. (Requires PaperMC)", "https://docs.adventure.kyori.net/minimessage/index.html"),
-        RUNNER_TIME_MESSAGE("runner-time.message", "<gradient:#00B4DB:#0083B0>%time%</gradient>", "The message to display in the actionbar for the runner timer."),
+        RUNNER_TIMER_INTERVAL("runner-timer.interval", 1, "The amount of ticks between runner timer updates (Actionbar Message)."),
+        RUNNER_TIMER_USE_MINIMESSAGE("runner-timer.use-minimessage", false, "Use MiniMessage for the runner timer actionbar message. (Requires PaperMC)", "https://docs.adventure.kyori.net/minimessage/index.html"),
+        RUNNER_TIME_MESSAGE("runner-time.message", "<gradient:#00B4DB:#0083B0>Time &7- &f%time%", "The message to display in the actionbar for the runner timer."),
 
         // Editor Task Settings
         EDITOR_TASK_ENABLED("editor-task.enabled", true, "Should the editor task be enabled?", "This task will show the player visual indicators for the level."),

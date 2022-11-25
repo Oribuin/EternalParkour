@@ -41,6 +41,7 @@ public class EditorTimer extends BukkitRunnable {
     @Override
     public void run() {
 
+        // TODO: Fix all boxes being displayed one block smaller than they should be if pos1 is smaller than pos2
         for (var entry : this.manager.getLevelEditors().entrySet()) {
             var player = Bukkit.getPlayer(entry.getKey());
 
@@ -55,9 +56,7 @@ public class EditorTimer extends BukkitRunnable {
             }
 
             // all other regions
-
-            entry.getValue().getLevel().getLevelRegions().forEach(region ->
-                    this.getCube(region).forEach(location -> blueParticle.spawn(player, location, 1)));
+            entry.getValue().getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> blueParticle.spawn(player, location, 1)));
 
             // All checkpoints
             entry.getValue().getLevel().getCheckpoints().forEach((id, loc) -> {
@@ -78,7 +77,6 @@ public class EditorTimer extends BukkitRunnable {
             return new ArrayList<>();
 
         pos1 = pos1.clone().add(1, 1, 1);
-
         return PluginUtils.getCube(pos1, pos2, 0.5);
     }
 

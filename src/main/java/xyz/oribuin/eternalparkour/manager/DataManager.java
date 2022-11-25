@@ -47,13 +47,12 @@ public class DataManager extends AbstractDataManager {
      * @param data The data to cache
      */
     public void cacheUser(UserData data) {
-        this.userData.compute(data.getPlayer(), (uuid, stringUserDataMap) -> {
-            if (stringUserDataMap == null)
-                stringUserDataMap = new HashMap<>();
+        var mapData = this.userData.get(data.getPlayer());
+        if (mapData == null)
+            mapData = new HashMap<>();
 
-            stringUserDataMap.put(data.getLevel(), data);
-            return stringUserDataMap;
-        });
+        mapData.put(data.getLevel(), data);
+        this.userData.put(data.getPlayer(), mapData);
     }
 
     /**
@@ -103,27 +102,29 @@ public class DataManager extends AbstractDataManager {
     public void saveUser(UserData data) {
         this.cacheUser(data);
 
-        final var update = "UPDATE " + this.getTablePrefix() + "data SET completed = ?, " +
-                "attempts = ?, " +
-                "bestTime = ?, " +
-                "lastTime = ?," +
-                "lastCompletion = ?," +
-                "hidingPlayers = ? " +
-                "totalTimes = ? " +
-                "WHERE player = ? " +
-                "AND level = ?";
-
         this.async(task -> this.databaseConnector.connect(connection -> {
+            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                    "player, " +
+                    "`level`, " +
+                    "completed, " +
+                    "attempts, " +
+                    "bestTime, " +
+                    "lastTime, " +
+                    "lastCompletion, " +
+                    "hidingPlayers, " +
+                    "totalTimes) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
             try (var statement = connection.prepareStatement(update)) {
-                statement.setInt(1, data.getCompleted());
-                statement.setInt(2, data.getAttempts());
-                statement.setLong(3, data.getBestTime());
-                statement.setLong(4, data.getLastTime());
-                statement.setLong(5, data.getLastCompletion());
-                statement.setBoolean(6, data.isHidingPlayers());
-                statement.setString(7, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                statement.setString(8, data.getPlayer().toString());
-                statement.setString(9, data.getLevel().toLowerCase());
+                statement.setString(1, data.getPlayer().toString());
+                statement.setString(2, data.getLevel().toLowerCase());
+                statement.setInt(3, data.getCompleted());
+                statement.setInt(4, data.getAttempts());
+                statement.setLong(5, data.getBestTime());
+                statement.setLong(6, data.getLastTime());
+                statement.setLong(7, data.getLastCompletion());
+                statement.setBoolean(8, data.isHidingPlayers());
+                statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                 statement.executeUpdate();
             }
         }));
@@ -204,7 +205,11 @@ public class DataManager extends AbstractDataManager {
      */
     @Nullable
     public UserData getData(UUID player, String level) {
-        return this.userData.get(player).get(level.toLowerCase());
+        var data = this.userData.get(player);
+        if (data == null)
+            return null;
+
+        return data.get(level);
     }
 
     /**
@@ -252,26 +257,28 @@ public class DataManager extends AbstractDataManager {
         this.async(task -> this.databaseConnector.connect(connection -> {
             for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
                 for (UserData data : entry.getValue().values()) {
-                    final var update = "UPDATE " + this.getTablePrefix() + "data SET completed = ?, " +
-                            "attempts = ?, " +
-                            "bestTime = ?, " +
-                            "lastTime = ?," +
-                            "lastCompetion = ?," +
-                            "hidingPlayers = ? " +
-                            "totalTimes = ? " +
-                            "WHERE player = ? " +
-                            "AND level = ?";
+                    final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                            "player, " +
+                            "`level`, " +
+                            "completed, " +
+                            "attempts, " +
+                            "bestTime, " +
+                            "lastTime, " +
+                            "lastCompletion, " +
+                            "hidingPlayers, " +
+                            "totalTimes) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     try (var statement = connection.prepareStatement(update)) {
-                        statement.setInt(1, data.getCompleted());
-                        statement.setInt(2, data.getAttempts());
-                        statement.setLong(3, data.getBestTime());
-                        statement.setLong(4, data.getLastTime());
-                        statement.setLong(5, data.getLastCompletion());
-                        statement.setBoolean(6, data.isHidingPlayers());
-                        statement.setString(7, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                        statement.setString(8, data.getPlayer().toString());
-                        statement.setString(9, data.getLevel().toLowerCase());
+                        statement.setString(1, data.getPlayer().toString());
+                        statement.setString(2, data.getLevel().toLowerCase());
+                        statement.setInt(3, data.getCompleted());
+                        statement.setInt(4, data.getAttempts());
+                        statement.setLong(5, data.getBestTime());
+                        statement.setLong(6, data.getLastTime());
+                        statement.setLong(7, data.getLastCompletion());
+                        statement.setBoolean(8, data.isHidingPlayers());
+                        statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                         statement.executeUpdate();
                     }
                 }
@@ -291,26 +298,28 @@ public class DataManager extends AbstractDataManager {
                     if (!data.getLevel().equals(level))
                         continue;
 
-                    final var update = "UPDATE " + this.getTablePrefix() + "data SET completed = ?, " +
-                            "attempts = ?, " +
-                            "bestTime = ?, " +
-                            "lastTime = ?," +
-                            "lastCompetion = ?," +
-                            "hidingPlayers = ? " +
-                            "totalTimes = ? " +
-                            "WHERE player = ? " +
-                            "AND level = ?";
+                    final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                            "player, " +
+                            "`level`, " +
+                            "completed, " +
+                            "attempts, " +
+                            "bestTime, " +
+                            "lastTime, " +
+                            "lastCompletion, " +
+                            "hidingPlayers, " +
+                            "totalTimes) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                     try (var statement = connection.prepareStatement(update)) {
-                        statement.setInt(1, data.getCompleted());
-                        statement.setInt(2, data.getAttempts());
-                        statement.setLong(3, data.getBestTime());
-                        statement.setLong(4, data.getLastTime());
-                        statement.setLong(5, data.getLastCompletion());
-                        statement.setBoolean(6, data.isHidingPlayers());
-                        statement.setString(7, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                        statement.setString(8, data.getPlayer().toString());
-                        statement.setString(9, data.getLevel().toLowerCase());
+                        statement.setString(1, data.getPlayer().toString());
+                        statement.setString(2, data.getLevel().toLowerCase());
+                        statement.setInt(3, data.getCompleted());
+                        statement.setInt(4, data.getAttempts());
+                        statement.setLong(5, data.getBestTime());
+                        statement.setLong(6, data.getLastTime());
+                        statement.setLong(7, data.getLastCompletion());
+                        statement.setBoolean(8, data.isHidingPlayers());
+                        statement.setString(9, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                         statement.executeUpdate();
                     }
                 }

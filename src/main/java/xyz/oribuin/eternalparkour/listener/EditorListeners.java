@@ -38,17 +38,14 @@ public class EditorListeners implements Listener {
         if (event.getHand() != EquipmentSlot.HAND)
             return;
 
+        if (block == null)
+            return;
+
         var editSession = this.manager.getLevelEditors().get(player.getUniqueId());
-        if (editSession == null)
+        if (editSession == null || editSession.getType() == EditType.VIEWING)
             return;
 
         event.setCancelled(true);
-
-        if (editSession.getType() == EditType.VIEWING)
-            return;
-
-        if (block == null)
-            return;
 
         // If the player is creating a region
         if (editSession.getType() == EditType.ADD_REGION || editSession.getType() == EditType.ADD_FINISH || editSession.getType() == EditType.ADD_START) {

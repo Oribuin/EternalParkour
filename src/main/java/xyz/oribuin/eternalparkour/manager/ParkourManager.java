@@ -27,7 +27,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -114,18 +113,17 @@ public class ParkourManager extends Manager {
                 if (parkourRegions != null) {
 
                     // Load all the parkour regions
-                    for (var regionKey : regions.getKeys(false)) {
-                        var firstPosX = regions.getDouble(regionKey + ".pos-1.x");
-                        var firstPosY = regions.getDouble(regionKey + ".pos-1.y");
-                        var firstPosZ = regions.getDouble(regionKey + ".pos-1.z");
-
+                    for (var regionKey : parkourRegions.getKeys(false)) {
+                        var firstPosX = parkourRegions.getDouble(regionKey + ".pos-1.x");
+                        var firstPosY = parkourRegions.getDouble(regionKey + ".pos-1.y");
+                        var firstPosZ = parkourRegions.getDouble(regionKey + ".pos-1.z");
                         var firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
 
-                        var secondPosX = regions.getDouble(regionKey + ".pos-2.x");
-                        var secondPosY = regions.getDouble(regionKey + ".pos-2.y");
-                        var secondPosZ = regions.getDouble(regionKey + ".pos-2.z");
-
+                        var secondPosX = parkourRegions.getDouble(regionKey + ".pos-2.x");
+                        var secondPosY = parkourRegions.getDouble(regionKey + ".pos-2.y");
+                        var secondPosZ = parkourRegions.getDouble(regionKey + ".pos-2.z");
                         var secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
+
                         level.getLevelRegions().add(new Region(firstPos, secondPos));
                     }
                 }
@@ -192,8 +190,16 @@ public class ParkourManager extends Manager {
             var enabled = levels.getBoolean(key + ".enabled");
             level.setEnabled(enabled);
 
-            System.out.println("Loaded level " + level.getId());
+            // Get the amount of times the level has been completed
+            var completed = levels.getInt(key + ".times-completed");
+            level.setTimesCompleted(completed);
+
+            // Calculate the level's leaderboard
+            this.calculateLevel(level);
+
+            // Add the level to the list
             this.levelData.put(key, level);
+
         }
     }
 
@@ -212,6 +218,7 @@ public class ParkourManager extends Manager {
         this.levelConfig.set(startPath + ".enabled", level.isEnabled());
         this.levelConfig.set(startPath + ".cooldown", level.getCooldown());
         this.levelConfig.set(startPath + ".commands", level.getCommands());
+        this.levelConfig.set(startPath + ".times-completed", level.getTimesCompleted());
 
         // Get region index
         AtomicInteger currentIndex = new AtomicInteger(0);
@@ -423,14 +430,12 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public Level getPlayingLevel(@NotNull UUID uuid) {
-        return this.levelData.values().stream()
-                .map(level -> this.activeRunners.get(uuid))
-                .filter(Objects::nonNull)
-                .map(RunSession::getLevel)
-                .map(Level::getId)
-                .map(this.levelData::get)
-                .findFirst()
-                .orElse(null);
+        RunSession session = this.activeRunners.get(uuid);
+        if (session == null) {
+            return null;
+        }
+
+        return this.levelData.get(session.getLevel().getId());
     }
 
     /**
@@ -452,7 +457,8 @@ public class ParkourManager extends Manager {
      * @return True if the location is in the finish region
      */
     public boolean isFinished(@NotNull Level level, @NotNull Location location) {
-        return level.getFinishRegion() != null && level.getFinishRegion().isInside(location);
+        var region = level.getRegionAt(location);
+        return region != null && level.isFinishRegion(region);
     }
 
     /**
@@ -501,6 +507,7 @@ public class ParkourManager extends Manager {
     public Level getLevel(@NotNull Location location) {
         return this.levelData.values().stream()
                 .filter(level -> level.getRegionAt(location) != null)
+                .filter(obj -> true)
                 .findFirst()
                 .orElse(null);
     }
@@ -548,7 +555,6 @@ public class ParkourManager extends Manager {
         }
 
         level.setTopUsers(topTimes);
-
     }
 
     /**
@@ -562,10 +568,15 @@ public class ParkourManager extends Manager {
 
         // Check if the player is already playing a level, if so cancel the run
         if (this.isPlaying(player.getUniqueId())) {
+            this.rosePlugin.getLogger().info("Player " + player.getName() + " is already playing a level, cancelling run");
             this.cancelRun(player, false);
         }
 
-        // Don't allow players to start a level if they are in creative mode or spectator mode
+        // Check if the player is editing a level, if the player is viewing the level, who cares
+        if (this.levelEditors.containsKey(player.getUniqueId()) && this.levelEditors.get(player.getUniqueId()).getType() != EditType.VIEWING)
+            return null;
+
+        //Don't allow players to start a level if they are in creative mode or spectator mode
         if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
             return null;
         }
@@ -596,21 +607,23 @@ public class ParkourManager extends Manager {
         var level = this.getPlayingLevel(player.getUniqueId());
         // Player is not playing a level
         if (level == null) {
+            this.rosePlugin.getLogger().info("Player " + player.getName() + " is not playing a level (finishRun)");
             return;
         }
 
-        // Don't allow players to finish a level if they are in creative or spectator mode or if they are creative flying
-//        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE || player.isFlying()) {
-//            return;
-//        }
+        // Check if the player is editing a level, if the player is viewing the level, who cares
+        if (this.levelEditors.containsKey(player.getUniqueId()) && this.levelEditors.get(player.getUniqueId()).getType() != EditType.VIEWING)
+            return;
 
-        // Player has not finished the level
-        if (!this.isFinished(level, player.getLocation())) {
+        //Don't allow players to start a level if they are in creative mode or spectator mode
+        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
             return;
         }
 
         var parkourRun = this.activeRunners.get(player.getUniqueId());
         parkourRun.setEndTime(finishTime);
+
+        this.activeRunners.remove(player.getUniqueId()); // Remove the player from the active runners
 
         var data = this.getUser(player.getUniqueId(), level.getId());
         if (data == null)
@@ -630,11 +643,19 @@ public class ParkourManager extends Manager {
         data.setCompleted(data.getCompleted() + 1);
         data.getTotalTimes().add(data.getLastTime());
 
-        if (data.getBestTime() < data.getLastTime())
+        if (data.getBestTime() < data.getLastTime()) {
             data.setBestTime(data.getLastTime());
+            this.saveUserData(data);
+            this.rosePlugin.getLogger().info("Player " + player.getName() + " has completed level " + level.getId() + " with a new best time of " + data.getLastTime());
+        } else {
+            this.cacheUser(data);
+            this.rosePlugin.getLogger().info("Player " + player.getName() + " has completed level " + level.getId() + " with a time of " + data.getLastTime());
+        }
 
         // Update the level's data
         level.setTimesCompleted(level.getTimesCompleted() + 1);
+
+        this.saveLevel(level);
 
         final var plc = StringPlaceholders.builder()
                 .addPlaceholder("level", level.getId())
@@ -644,18 +665,16 @@ public class ParkourManager extends Manager {
                 .addPlaceholder("best", PluginUtils.parseFromTime(data.getBestTime()))
                 .build();
 
-        // Check if the player has a new best time
-        if (data.getBestTime() == data.getLastTime()) {
-            // Send new best time message here
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " has a new best time of " + data.getBestTime() + " in level " + level.getId());
-        } else {
-            // Send finish message here
-            this.rosePlugin.getLogger().info("Player " + player.getName() + " has finished level " + level.getId() + " in " + data.getLastTime() + "ms");
-        }
+//
+//        // Check if the player has a new best time
+//        if (data.getBestTime() == data.getLastTime()) {
+//            // Send new best time message here
+//            this.rosePlugin.getLogger().info("Player " + player.getName() + " has a new best time of " + data.getBestTime() + " in level " + level.getId());
+//        } else {
+//            // Send finish message here
+//            this.rosePlugin.getLogger().info("Player " + player.getName() + " has finished level " + level.getId() + " in " + data.getLastTime() + "ms");
+//        }
 
-
-        this.cacheUser(data);
-        this.cacheLevel(level);
     }
 
     /**

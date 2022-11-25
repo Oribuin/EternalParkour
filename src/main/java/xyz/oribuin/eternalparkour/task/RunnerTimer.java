@@ -3,6 +3,8 @@ package xyz.oribuin.eternalparkour.task;
 import dev.rosewood.rosegarden.utils.HexUtils;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.oribuin.eternalparkour.EternalParkour;
@@ -10,6 +12,9 @@ import xyz.oribuin.eternalparkour.hook.PAPI;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.util.PluginUtils;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * This is the task that will display the time for the player in the action bar.
@@ -22,6 +27,7 @@ public class RunnerTimer extends BukkitRunnable {
     private final String timerMessage;
     private final boolean useMiniMessage;
 
+    private final SimpleDateFormat formatter = new SimpleDateFormat("mm:ss:SSS");
 
     public RunnerTimer(EternalParkour plugin) {
         this.manager = plugin.getManager(ParkourManager.class);
@@ -43,7 +49,7 @@ public class RunnerTimer extends BukkitRunnable {
                 continue;
             }
 
-            var placeholders = StringPlaceholders.single("time", PluginUtils.parseFromTime(current - runner.getStartTime()));
+            var placeholders = StringPlaceholders.single("time", formatter.format(new Date((current - runner.getStartTime()))));
             if (PluginUtils.usingPaper() && useMiniMessage) {
                 var miniMessage = MiniMessage.miniMessage()
                         .deserialize(PAPI.apply(player, placeholders.apply(timerMessage)));
@@ -52,7 +58,15 @@ public class RunnerTimer extends BukkitRunnable {
                 return;
             }
 
-            player.sendActionBar(HexUtils.colorify(PAPI.apply(player, placeholders.apply(timerMessage))));
+            if (PluginUtils.usingPaper()) {
+                player.sendActionBar(HexUtils.colorify(PAPI.apply(player, placeholders.apply(timerMessage))));
+                return;
+            }
+
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                    TextComponent.fromLegacyText(HexUtils.colorify(
+                            PAPI.apply(player, placeholders.apply(timerMessage))
+                    )));
         }
     }
 
