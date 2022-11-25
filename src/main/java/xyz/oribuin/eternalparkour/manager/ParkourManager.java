@@ -716,8 +716,11 @@ public class ParkourManager extends Manager {
         // Teleport the player back to the checkpoint if they have one
         var checkpoint = session.getCheckpoint();
         if (level.getCheckpoints().size() > 0 && session.getCheckpoint() <= 0) {
-            this.teleport(player, level.getCheckpoints().get(checkpoint));
-            return;
+            var checkpointLocation = level.getCheckpoints().get(0);
+            if (checkpointLocation != null) {
+                this.teleport(player, checkpointLocation);
+                return;
+            }
         }
 
         // Update the player's data

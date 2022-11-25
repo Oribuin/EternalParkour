@@ -74,7 +74,6 @@ public class RegionListeners implements Listener {
             this.plugin.getServer().getPluginManager().callEvent(new PlayerEnterRegionEvent(player, region, level));
         }
 
-        System.out.println("From: " + fromRegion + " To: " + region);
         // Signify that a player has left a region.
         if (region == null && fromRegion != null) {
             this.plugin.getLogger().info(String.format("%s left region %s in level %s", player.getName(), this.getRegionType(level, fromRegion), level.getId()));
