@@ -18,7 +18,9 @@ import xyz.oribuin.eternalparkour.parkour.edit.EditType;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
 import xyz.oribuin.eternalparkour.util.PluginUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EditorListeners implements Listener {
@@ -69,8 +71,8 @@ public class EditorListeners implements Listener {
     private void editRegion(Player player, EditSession session, Block block, Action action) {
         var current = session.getRegion() == null ? new Region() : session.getRegion();
         var particle = new ParticleData(Particle.REDSTONE);
-        var location = PluginUtils.asBlockLoc(block.getLocation());
-        var particleLocations = PluginUtils.getCube(location, location.clone().add(1, 1, 1), 0.5);
+        var location = block.getLocation().clone();
+        var particleLocations = this.getCube(location, location.clone().add(1, 1, 1), 0.5);
 
         if (action == Action.LEFT_CLICK_BLOCK) {
             current.setPos1(location);
@@ -92,8 +94,6 @@ public class EditorListeners implements Listener {
             if (session.getType() == EditType.ADD_REGION && session.getLevel().isParkourRegion(current)) {
                 return;
             }
-
-            System.out.println("Saving region for " + session.getLevel().getId());
 
             switch (session.getType()) {
                 case ADD_REGION -> session.getLevel().getLevelRegions().add(current);
@@ -127,7 +127,7 @@ public class EditorListeners implements Listener {
                 .findFirst()
                 .orElse(null);
 
-        var particleLocations = PluginUtils.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
+        var particleLocations = this.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
         var particle = new ParticleData(Particle.REDSTONE);
 
         // Add a new checkpoint
@@ -160,5 +160,48 @@ public class EditorListeners implements Listener {
         this.manager.saveEditSession(player);
     }
 
+    /**
+     * Get all the particle locations to spawn a hollow cube in between point A & Point B
+     *
+     * @param corner1          The first corner.
+     * @param corner2          The second corner
+     * @param particleDistance The distance between particles
+     * @return The list of particle locations
+     * @author Esophose
+     * @ <a href="https://github.com/Rosewood-Development/PlayerParticles/blob/master/src/main/java/dev/esophose/playerparticles/styles/ParticleStyleOutline.java#L86">...</a>
+     */
+    private List<Location> getCube(Location corner1, Location corner2, double particleDistance) {
+        List<Location> result = new ArrayList<>();
+        var world = corner1.getWorld();
+        var minX = Math.min(corner1.getX(), corner2.getX());
+        var minY = Math.min(corner1.getY(), corner2.getY());
+        var minZ = Math.min(corner1.getZ(), corner2.getZ());
+        var maxX = Math.max(corner1.getX(), corner2.getX());
+        var maxY = Math.max(corner1.getY(), corner2.getY());
+        var maxZ = Math.max(corner1.getZ(), corner2.getZ());
+
+        for (double x = minX; x <= maxX; x += particleDistance) {
+            result.add(new Location(world, x, minY, minZ));
+            result.add(new Location(world, x, maxY, minZ));
+            result.add(new Location(world, x, minY, maxZ));
+            result.add(new Location(world, x, maxY, maxZ));
+        }
+
+        for (double y = minY; y <= maxY; y += particleDistance) {
+            result.add(new Location(world, minX, y, minZ));
+            result.add(new Location(world, maxX, y, minZ));
+            result.add(new Location(world, minX, y, maxZ));
+            result.add(new Location(world, maxX, y, maxZ));
+        }
+
+        for (double z = minZ; z <= maxZ; z += particleDistance) {
+            result.add(new Location(world, minX, minY, z));
+            result.add(new Location(world, maxX, minY, z));
+            result.add(new Location(world, minX, maxY, z));
+            result.add(new Location(world, maxX, maxY, z));
+        }
+
+        return result;
+    }
 
 }

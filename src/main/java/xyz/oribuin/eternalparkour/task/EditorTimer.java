@@ -63,7 +63,7 @@ public class EditorTimer extends BukkitRunnable {
                 var corner1 = loc.clone().add(1, 2, 1);
                 var corner2 = loc.clone();
 
-                PluginUtils.getCube(corner1, corner2, 0.5).forEach(location -> yellowParticle.spawn(player, location, 1));
+                this.getCube(corner1, corner2, 0.5, 0).forEach(location -> yellowParticle.spawn(player, location, 1));
             });
         }
     }
@@ -76,8 +76,51 @@ public class EditorTimer extends BukkitRunnable {
         if (pos1 == null || pos2 == null)
             return new ArrayList<>();
 
-        
-        return PluginUtils.getCube(pos1, pos2, 0.5);
+        return this.getCube(pos1, pos2, 0.5, 1.0);
+    }
+
+    /**
+     * Get all the particle locations to spawn a hollow cube in between point A & Point B
+     *
+     * @param corner1          The first corner.
+     * @param corner2          The second corner
+     * @param particleDistance The distance between particles
+     * @return The list of particle locations
+     * @author Esophose
+     * @ <a href="https://github.com/Rosewood-Development/PlayerParticles/blob/master/src/main/java/dev/esophose/playerparticles/styles/ParticleStyleOutline.java#L86">...</a>
+     */
+    private List<Location> getCube(Location corner1, Location corner2, double particleDistance, double outerAdjustment) {
+        List<Location> result = new ArrayList<>();
+        var world = corner1.getWorld();
+        var minX = Math.min(corner1.getX(), corner2.getX());
+        var minY = Math.min(corner1.getY(), corner2.getY());
+        var minZ = Math.min(corner1.getZ(), corner2.getZ());
+        var maxX = Math.max(corner1.getX(), corner2.getX()) + outerAdjustment;
+        var maxY = Math.max(corner1.getY(), corner2.getY()) + outerAdjustment;
+        var maxZ = Math.max(corner1.getZ(), corner2.getZ()) + outerAdjustment;
+
+        for (double x = minX; x <= maxX; x += particleDistance) {
+            result.add(new Location(world, x, minY, minZ));
+            result.add(new Location(world, x, maxY, minZ));
+            result.add(new Location(world, x, minY, maxZ));
+            result.add(new Location(world, x, maxY, maxZ));
+        }
+
+        for (double y = minY; y <= maxY; y += particleDistance) {
+            result.add(new Location(world, minX, y, minZ));
+            result.add(new Location(world, maxX, y, minZ));
+            result.add(new Location(world, minX, y, maxZ));
+            result.add(new Location(world, maxX, y, maxZ));
+        }
+
+        for (double z = minZ; z <= maxZ; z += particleDistance) {
+            result.add(new Location(world, minX, minY, z));
+            result.add(new Location(world, maxX, minY, z));
+            result.add(new Location(world, minX, maxY, z));
+            result.add(new Location(world, maxX, maxY, z));
+        }
+
+        return result;
     }
 
 
