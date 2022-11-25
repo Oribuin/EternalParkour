@@ -1,0 +1,86 @@
+package xyz.oribuin.eternalparkour.task;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.scheduler.BukkitRunnable;
+import xyz.oribuin.eternalparkour.EternalParkour;
+import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Region;
+import xyz.oribuin.eternalparkour.particle.ParticleData;
+import xyz.oribuin.eternalparkour.util.PluginUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * This is the task that will display the time for the player in the action bar.
+ *
+ * @author oribuin
+ */
+public class EditorTimer extends BukkitRunnable {
+
+    private final ParkourManager manager;
+    // mmm, this is terrible to look at
+    private final ParticleData greenParticle;
+    private final ParticleData redParticle;
+    private final ParticleData blueParticle;
+    private final ParticleData yellowParticle;
+
+    public EditorTimer(EternalParkour plugin) {
+        this.manager = plugin.getManager(ParkourManager.class);
+
+        this.greenParticle = new ParticleData(Particle.REDSTONE).setDustColor(Color.LIME);
+        this.redParticle = new ParticleData(Particle.REDSTONE).setDustColor(Color.RED);
+        this.blueParticle = new ParticleData(Particle.REDSTONE).setDustColor(Color.BLUE);
+        this.yellowParticle = new ParticleData(Particle.REDSTONE).setDustColor(Color.YELLOW);
+
+    }
+
+    @Override
+    public void run() {
+
+        for (var entry : this.manager.getLevelEditors().entrySet()) {
+            var player = Bukkit.getPlayer(entry.getKey());
+
+            var spawnRegion = entry.getValue().getLevel().getStartRegion();
+            if (spawnRegion != null) {
+                this.getCube(spawnRegion).forEach(location -> greenParticle.spawn(player, location, 1));
+            }
+
+            var endRegion = entry.getValue().getLevel().getFinishRegion();
+            if (endRegion != null) {
+                this.getCube(endRegion).forEach(location -> redParticle.spawn(player, location, 1));
+            }
+
+            // all other regions
+
+            entry.getValue().getLevel().getLevelRegions().forEach(region ->
+                    this.getCube(region).forEach(location -> blueParticle.spawn(player, location, 1)));
+
+            // All checkpoints
+            entry.getValue().getLevel().getCheckpoints().forEach((id, loc) -> {
+                var corner1 = loc.clone().add(1, 2, 1);
+                var corner2 = loc.clone();
+
+                PluginUtils.getCube(corner1, corner2, 0.5).forEach(location -> yellowParticle.spawn(player, location, 1));
+            });
+        }
+    }
+
+    private List<Location> getCube(Region region) {
+        // Get the lowest and highest points
+        Location pos1 = region.getPos1();
+        Location pos2 = region.getPos2();
+
+        if (pos1 == null || pos2 == null)
+            return new ArrayList<>();
+
+        pos1 = pos1.clone().add(1, 1, 1);
+
+        return PluginUtils.getCube(pos1, pos2, 0.5);
+    }
+
+
+}

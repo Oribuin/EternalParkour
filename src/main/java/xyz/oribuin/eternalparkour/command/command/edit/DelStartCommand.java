@@ -1,43 +1,35 @@
-package xyz.oribuin.eternalparkour.command.command;
+package xyz.oribuin.eternalparkour.command.command.edit;
 
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
-import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
+import dev.rosewood.rosegarden.command.framework.RoseSubCommand;
+import dev.rosewood.rosegarden.command.framework.annotation.Inject;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
 
-public class DeleteCommand extends RoseCommand {
+public class DelStartCommand extends RoseSubCommand {
 
-    public DeleteCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
+    public DelStartCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
         super(rosePlugin, parent);
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, Level level) {
+    public void execute(@Inject CommandContext context, Level level) {
         var manager = this.rosePlugin.getManager(ParkourManager.class);
         var locale = this.rosePlugin.getManager(LocaleManager.class);
 
-        manager.deleteLevel(level);
-        locale.sendMessage(context.getSender(), "command-delete-success", StringPlaceholders.single("name", level.getId()));
+        level.setStartRegion(null);
+        locale.sendMessage(context.getSender(), "command-edit-del-start-success", StringPlaceholders.single("name", level.getId()));
     }
 
     @Override
     protected String getDefaultName() {
-        return "delete";
-    }
-
-    @Override
-    public String getDescriptionKey() {
-        return "command-delete-description";
-    }
-
-    @Override
-    public String getRequiredPermission() {
-        return "eternalparkour.command.delete";
+        return "delstart";
     }
 
 }

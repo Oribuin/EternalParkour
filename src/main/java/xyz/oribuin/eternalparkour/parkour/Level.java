@@ -12,8 +12,8 @@ import java.util.Map;
 public class Level {
 
     private @NotNull String id; // The ID of the level
-    private @Nullable Location spawn; // The spawn location of the level
-    private @Nullable Region startRegion; // The spawn location of the level
+    private @Nullable Location teleport; // The fail teleport location
+    private @Nullable Region startRegion; // The start region of the level
     private @NotNull List<Region> levelRegions; // List of regions for the level
     private @Nullable Region finishRegion; // Region that the player must stand in to finish the level
     private @NotNull Map<Integer, Location> checkpoints; // Map of checkpoints for the level
@@ -33,7 +33,7 @@ public class Level {
         this.averageTime = 0;
         this.timesCompleted = 0;
         this.topUsers = new LinkedHashMap<>();
-        this.spawn = null;
+        this.teleport = null;
         this.cooldown = 0L;
         this.enabled = true;
     }
@@ -51,6 +51,16 @@ public class Level {
         }
 
         return null;
+    }
+
+    /**
+     * Check if the location is inside the start region
+     *
+     * @param region The region to check
+     * @return Whether the location is inside the start region
+     */
+    public boolean isStartRegion(@NotNull Region region) {
+        return this.startRegion != null && this.startRegion.equals(region);
     }
 
     /**
@@ -72,6 +82,7 @@ public class Level {
     public boolean isFinishRegion(@NotNull Region region) {
         return this.finishRegion != null && this.finishRegion.equals(region);
     }
+
 
     public @NotNull String getId() {
         return id;
@@ -145,12 +156,12 @@ public class Level {
         this.topUsers = topUsers;
     }
 
-    public @Nullable Location getSpawn() {
-        return spawn;
+    public @Nullable Location getTeleport() {
+        return teleport;
     }
 
-    public void setSpawn(@Nullable Location spawn) {
-        this.spawn = spawn;
+    public void setTeleport(@Nullable Location teleport) {
+        this.teleport = teleport;
     }
 
     public long getCooldown() {

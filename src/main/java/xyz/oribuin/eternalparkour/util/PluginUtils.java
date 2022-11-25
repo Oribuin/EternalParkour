@@ -1,6 +1,7 @@
 package xyz.oribuin.eternalparkour.util;
 
 import org.bukkit.Location;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,16 +107,21 @@ public final class PluginUtils {
      * @return The formatted location
      */
     public static String formatLocation(Location location) {
+        if (location == null)
+            return "null";
+
         return String.format("%s, %s, %s", location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
     /**
-     * Create a 3d hollow cube from 2 org.bukkit.Location objects with distance between them
+     * Get all the particle locations to spawn a hollow cube in between point A & Point B
      *
-     * @param corner1          The first corner of the cube
-     * @param corner2          The second corner of the cube
+     * @param corner1          The first corner.
+     * @param corner2          The second corner
      * @param particleDistance The distance between particles
-     * @return A list of blocks that make up the cube
+     * @return The list of particle locations
+     * @author Esophose
+     * @ <a href="https://github.com/Rosewood-Development/PlayerParticles/blob/master/src/main/java/dev/esophose/playerparticles/styles/ParticleStyleOutline.java#L86">...</a>
      */
     public static List<Location> getCube(Location corner1, Location corner2, double particleDistance) {
         List<Location> result = new ArrayList<>();
@@ -126,17 +132,38 @@ public final class PluginUtils {
         var maxX = Math.max(corner1.getX(), corner2.getX());
         var maxY = Math.max(corner1.getY(), corner2.getY());
         var maxZ = Math.max(corner1.getZ(), corner2.getZ());
-        for (var x = minX; x <= maxX; x += particleDistance) {
-            for (var y = minY; y <= maxY; y += particleDistance) {
-                for (var z = minZ; z <= maxZ; z += particleDistance) {
-                    if (x == minX || x == maxX || y == minY || y == maxY || z == minZ || z == maxZ) {
-                        result.add(new Location(world, x, y, z));
-                    }
-                }
-            }
+
+        for (double x = minX; x <= maxX; x += particleDistance) {
+            result.add(new Location(world, x, minY, minZ));
+            result.add(new Location(world, x, maxY, minZ));
+            result.add(new Location(world, x, minY, maxZ));
+            result.add(new Location(world, x, maxY, maxZ));
+        }
+
+        for (double y = minY; y <= maxY; y += particleDistance) {
+            result.add(new Location(world, minX, y, minZ));
+            result.add(new Location(world, maxX, y, minZ));
+            result.add(new Location(world, minX, y, maxZ));
+            result.add(new Location(world, maxX, y, maxZ));
+        }
+
+        for (double z = minZ; z <= maxZ; z += particleDistance) {
+            result.add(new Location(world, minX, minY, z));
+            result.add(new Location(world, maxX, minY, z));
+            result.add(new Location(world, minX, maxY, z));
+            result.add(new Location(world, maxX, maxY, z));
         }
 
         return result;
     }
+
+    public static @Nullable Location asBlockLoc(@Nullable Location location) {
+        if (location == null)
+            return null;
+
+        return new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    }
+
+
 
 }

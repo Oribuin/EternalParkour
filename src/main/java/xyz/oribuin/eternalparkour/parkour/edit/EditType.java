@@ -2,23 +2,11 @@ package xyz.oribuin.eternalparkour.parkour.edit;
 
 public enum EditType {
 
-    // Checkpoint types
-    CHANGE_CHECKPOINTS,
-
-    // Spawn Area
-    SET_SPAWN,
-
-    // Set Start Region
-    SET_START,
-    REMOVE_START,
-
-    // Finish Area
-    SET_FINISH,
-    REMOVE_FINISH,
-
-    // Add regions to the level
-    ADD_REGION,
-    REMOVE_REGION,
+    VIEWING, // Viewing the level
+    CHANGE_CHECKPOINTS, // Change the checkpoints of the level
+    ADD_START, // Setting the start region of the level
+    ADD_FINISH, // Setting the finish area of the level
+    ADD_REGION, // Adding a region to the level
 
     ;
 

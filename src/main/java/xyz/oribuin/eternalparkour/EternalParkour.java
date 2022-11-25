@@ -4,12 +4,16 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.manager.Manager;
 import dev.rosewood.rosegarden.utils.NMSUtil;
 import org.bukkit.Bukkit;
+import xyz.oribuin.eternalparkour.hook.PAPI;
+import xyz.oribuin.eternalparkour.listener.EditorListeners;
+import xyz.oribuin.eternalparkour.listener.PlayerListeners;
+import xyz.oribuin.eternalparkour.listener.RegionListeners;
 import xyz.oribuin.eternalparkour.manager.CommandManager;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
-
 import xyz.oribuin.eternalparkour.manager.DataManager;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
+import xyz.oribuin.eternalparkour.task.EditorTimer;
 import xyz.oribuin.eternalparkour.task.RunnerTimer;
 
 import java.util.Collections;
@@ -35,6 +39,12 @@ public class EternalParkour extends RosePlugin {
         }
 
         // Register Listeners
+        this.getServer().getPluginManager().registerEvents(new EditorListeners(this), this);
+        this.getServer().getPluginManager().registerEvents(new PlayerListeners(this), this);
+        this.getServer().getPluginManager().registerEvents(new RegionListeners(this), this);
+
+        // Register PlaceholderAPI
+        new PAPI(this);
 
     }
 
@@ -43,8 +53,12 @@ public class EternalParkour extends RosePlugin {
         super.reload();
 
         Bukkit.getScheduler().cancelTasks(this);
-        new RunnerTimer(this).runTaskTimerAsynchronously(this, 0, Setting.RUNNER_TIMER_INTERVAL.getInt());
 
+        if (Setting.RUNNER_TIME_ENABLED.getBoolean())
+            new RunnerTimer(this).runTaskTimerAsynchronously(this, 0, Setting.RUNNER_TIMER_INTERVAL.getInt());
+
+        if (Setting.EDITOR_TASK_ENABLED.getBoolean())
+            new EditorTimer(this).runTaskTimerAsynchronously(this, 0, Setting.EDITOR_TASK_INTERVAL.getInt());
     }
 
     @Override

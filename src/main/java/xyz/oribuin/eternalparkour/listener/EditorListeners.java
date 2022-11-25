@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Region;
@@ -19,12 +20,10 @@ import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class EditorListeners implements Listener {
 
     private final ParkourManager manager;
-    private final Map<UUID, Region> currentRegion = new HashMap<>();
 
     public EditorListeners(EternalParkour plugin) {
         this.manager = plugin.getManager(ParkourManager.class);
@@ -36,24 +35,30 @@ public class EditorListeners implements Listener {
         var block = event.getClickedBlock();
         var action = event.getAction();
 
+        if (event.getHand() != EquipmentSlot.HAND)
+            return;
+
         var editSession = this.manager.getLevelEditors().get(player.getUniqueId());
         if (editSession == null)
+            return;
+
+        event.setCancelled(true);
+
+        if (editSession.getType() == EditType.VIEWING)
             return;
 
         if (block == null)
             return;
 
         // If the player is creating a region
-        if (editSession.getType() == EditType.ADD_REGION || editSession.getType() == EditType.SET_FINISH) {
+        if (editSession.getType() == EditType.ADD_REGION || editSession.getType() == EditType.ADD_FINISH || editSession.getType() == EditType.ADD_START) {
             this.editRegion(player, editSession, block, action);
             return;
         }
 
         if (editSession.getType() == EditType.CHANGE_CHECKPOINTS) {
             this.editCheckpoint(player, editSession, block);
-            return;
         }
-
     }
 
     /**
@@ -65,38 +70,42 @@ public class EditorListeners implements Listener {
      * @param action  The action the player performed
      */
     private void editRegion(Player player, EditSession session, Block block, Action action) {
-        var current = this.currentRegion.getOrDefault(player.getUniqueId(), new Region());
+        var current = session.getRegion() == null ? new Region() : session.getRegion();
         var particle = new ParticleData(Particle.REDSTONE);
-
-        var particleLocations = PluginUtils.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
+        var location = PluginUtils.asBlockLoc(block.getLocation());
+        var particleLocations = PluginUtils.getCube(location, location.clone().add(1, 1, 1), 0.5);
 
         if (action == Action.LEFT_CLICK_BLOCK) {
-            current.setPos1(block.getLocation());
-
-            particle.setDustColor(Color.LIME)
-                    .cacheParticleData();
-
+            current.setPos1(location);
+            particle.setDustColor(Color.LIME).cacheParticleData();
             particleLocations.forEach(loc -> particle.spawn(player, loc, 1));
-        } else if (action == Action.RIGHT_CLICK_BLOCK) {
-            current.setPos2(block.getLocation());
-
-            particle.setDustColor(Color.RED)
-                    .cacheParticleData();
-
-            particleLocations.forEach(loc -> particle.spawn(player, loc, 1));
-
         }
 
-        if (current.getPos1() != null && current.getPos2() != null) {
-            this.currentRegion.remove(player.getUniqueId());
+        if (action == Action.RIGHT_CLICK_BLOCK) {
+            current.setPos2(location);
+            particle.setDustColor(Color.RED).cacheParticleData();
+            particleLocations.forEach(loc -> particle.spawn(player, loc, 1));
+        }
 
-            if (session.getType() == EditType.ADD_REGION) {
-                session.getLevel().getLevelRegions().add(current);
-            } else if (session.getType() == EditType.SET_FINISH) {
-                session.getLevel().setFinishRegion(current);
+        session.setRegion(current);
+
+        if (current.getPos1() != null && current.getPos2() != null) {
+
+            // We're not adding a region that already exists
+            if (session.getType() == EditType.ADD_REGION && session.getLevel().isParkourRegion(current)) {
+                return;
             }
 
-            this.manager.saveEditSession(player);
+            System.out.println("Saving region for " + session.getLevel().getId());
+
+            switch (session.getType()) {
+                case ADD_REGION -> session.getLevel().getLevelRegions().add(current);
+                case ADD_START -> session.getLevel().setStartRegion(current);
+                case ADD_FINISH -> session.getLevel().setFinishRegion(current);
+            }
+
+            this.manager.saveLevel(session.getLevel());
+            this.manager.startEditing(player, session.getLevel(), session.getType());
         }
 
     }
@@ -110,6 +119,8 @@ public class EditorListeners implements Listener {
      */
     private void editCheckpoint(Player player, EditSession session, Block block) {
 
+        System.out.println("Editing checkpoints");
+
         var level = session.getLevel();
         var checkpoints = level.getCheckpoints();
 
@@ -121,7 +132,6 @@ public class EditorListeners implements Listener {
 
         var particleLocations = PluginUtils.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
         var particle = new ParticleData(Particle.REDSTONE);
-
 
         // Add a new checkpoint
         if (checkpoint == null) {

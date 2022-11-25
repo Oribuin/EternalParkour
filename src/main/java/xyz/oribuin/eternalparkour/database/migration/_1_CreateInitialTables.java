@@ -15,7 +15,7 @@ public class _1_CreateInitialTables extends DataMigration {
     @Override
     public void migrate(DatabaseConnector connector, Connection connection, String tablePrefix) throws SQLException {
         final var createTimesTable = "CREATE TABLE IF NOT EXISTS " + tablePrefix + "data (`player` VARCHAR(36), " +
-                "`level` TEXT,"  +
+                "`level` TEXT," +
                 "`completed` INT, " +
                 "`attempts` INT, " +
                 "`bestTime` LONG, " +

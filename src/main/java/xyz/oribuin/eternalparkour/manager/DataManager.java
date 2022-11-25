@@ -63,7 +63,8 @@ public class DataManager extends AbstractDataManager {
      */
     public void saveUser(Player player) {
         var data = this.userData.get(player.getUniqueId());
-        if (data == null) return;
+        if (data == null)
+            return;
 
         this.async(task -> this.databaseConnector.connect(connection -> {
             for (var entry : data.values()) {

@@ -29,7 +29,7 @@ public class CreateCommand extends RoseCommand {
         }
 
         Level level = new Level(name.toLowerCase());
-        level.setSpawn(player.getLocation()); // Set the player's location as the level's spawn
+        level.setTeleport(player.getLocation()); // Set the player's location as the level's spawn
         manager.saveLevel(level); // Save the level to the database
 
         locale.sendMessage(player, "command-create-success", StringPlaceholders.single("name", name));

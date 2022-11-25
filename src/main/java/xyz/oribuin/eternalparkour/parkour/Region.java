@@ -33,12 +33,14 @@ public class Region {
             return false;
 
         // Declare location x, y, z
-        var x = location.getX();
-        var y = location.getY();
-        var z = location.getZ();
+        var x = location.getBlockX();
+        var y = location.getBlockY();
+        var z = location.getBlockZ();
 
         // Check if the location is inside the region
-        return pos1.getX() <= x && pos1.getZ() <= z && pos2.getX() >= x && pos2.getZ() >= z && pos1.getY() <= y && pos2.getY() >= y;
+        return x >= Math.min(pos1.getX(), pos2.getX()) && x <= Math.max(pos1.getX(), pos2.getX()) &&
+                y >= Math.min(pos1.getY(), pos2.getY()) && y <= Math.max(pos1.getY(), pos2.getY()) &&
+                z >= Math.min(pos1.getZ(), pos2.getZ()) && z <= Math.max(pos1.getZ(), pos2.getZ());
     }
 
     public @Nullable Location getPos1() {
