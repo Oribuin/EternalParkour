@@ -38,6 +38,15 @@ public class RegionListeners implements Listener {
 
         var player = event.getPlayer();
 
+        //Don't allow players to start a level if they are in creative mode or spectator mode
+        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
+
+        // Check if the player is editing a level, if the player is viewing the level, who cares
+        if (this.manager.getLevelEditors().containsKey(player.getUniqueId()) && this.manager.getLevelEditors().get(player.getUniqueId()).getType() != EditType.VIEWING)
+            return;
+
         // Get the current level the player is in.
         var level = this.manager.getLevel(event.getTo());
         var from = this.manager.getLevel(event.getFrom());
@@ -97,16 +106,6 @@ public class RegionListeners implements Listener {
             if (!level.isParkourRegion(region) && !level.isParkourRegion(fromRegion)) {
                 this.plugin.getServer().getPluginManager().callEvent(new PlayerSwitchRegionEvent(player, region, fromRegion));
             }
-        }
-
-        // Check if the player is editing a level, if the player is viewing the level, who cares
-        if (this.manager.getLevelEditors().containsKey(player.getUniqueId())
-                && this.manager.getLevelEditors().get(player.getUniqueId()).getType() != EditType.VIEWING)
-            return;
-
-        //Don't allow players to start a level if they are in creative mode or spectator mode
-        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
-            return;
         }
 
         var session = this.manager.getRunSession(player);
