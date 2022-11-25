@@ -21,7 +21,6 @@ public class _1_CreateInitialTables extends DataMigration {
                 "`bestTime` LONG, " +
                 "`lastTime` LONG, " +
                 "`lastCompletion` LONG, " +
-                "`hidingPlayers` BOOLEAN, " +
                 "`totalTimes` TEXT, " +
                 "PRIMARY KEY(`player`, `level`))";
 

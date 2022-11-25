@@ -6,7 +6,7 @@ plugins {
 }
 
 group "xyz.oribuin"
-version "1.0"
+version "1.0.0-pre1"
 
 java {
     toolchain {
