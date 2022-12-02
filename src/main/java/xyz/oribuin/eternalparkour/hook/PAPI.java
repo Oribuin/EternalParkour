@@ -102,25 +102,27 @@ public class PAPI extends PlaceholderExpansion {
 
             // The general user data
             // Best time formatted
-            this.put("best-time", player -> PluginUtils.parseToScore(getData(player, level).getBestTime()));
+            this.put("best_time", player -> PluginUtils.parseToScore(getData(player, level).getBestTime()));
             // Best time in milliseconds
-            this.put("best-time_raw", player -> String.valueOf(getData(player, level).getBestTime()));
+            this.put("best_time_raw", player -> String.valueOf(getData(player, level).getBestTime()));
             // The amount of times the user has attempted the level
             this.put("attempts", player -> String.valueOf(getData(player, level).getAttempts()));
             // How many times the user has completed the level
-            this.put("completed", player -> String.valueOf(getData(player, level).getCompletions()));
+            this.put("completions", player -> String.valueOf(getData(player, level).getCompletions()));
             // The time it took the user to complete the level last
-            this.put("last-time", player -> PluginUtils.parseToScore(getData(player, level).getLastTime()));
+            this.put("last_time", player -> PluginUtils.parseToScore(getData(player, level).getLastTime()));
+            this.put("last_time_raw", player -> String.valueOf(getData(player, level).getLastTime()));
             // Reward Cooldown
             this.put("cooldown", player -> PluginUtils.parseFromTime(getData(player, level).getLastCompletion() - System.currentTimeMillis()));
+            this.put("cooldown_raw", player -> String.valueOf(getData(player, level).getLastCompletion() - System.currentTimeMillis()));
             // best time achieved date
-            this.put("best-achieved", player -> PluginUtils.parseToDate(getData(player, level).getBestTimeAchieved()));
-            this.put("best-achieved-raw", player -> String.valueOf(getData(player, level).getBestTimeAchieved()));
+            this.put("best_achieved", player -> PluginUtils.parseToDate(getData(player, level).getBestTimeAchieved()));
+            this.put("best_achieved-raw", player -> String.valueOf(getData(player, level).getBestTimeAchieved()));
 
             // Global level data
-            this.put("average-time", player -> PluginUtils.parseFromTime(level.getAverageTime()));
-            this.put("average-time_raw", player -> String.valueOf(level.getAverageTime()));
-            this.put("max-checkpoint", player -> String.valueOf(level.getCheckpoints().size()));
+            this.put("average_time", player -> PluginUtils.parseFromTime(level.getAverageTime()));
+            this.put("average_time_raw", player -> String.valueOf(level.getAverageTime()));
+            this.put("max_checkpoints", player -> String.valueOf(level.getCheckpoints().size()));
 
             // Leaderboard data
             this.put("position", player -> String.valueOf(level.getLeaderboardPosition(player.getUniqueId())));

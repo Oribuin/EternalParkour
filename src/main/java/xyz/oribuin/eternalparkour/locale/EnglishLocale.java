@@ -85,9 +85,9 @@ public class EnglishLocale implements Locale {
             this.put("command-edit-view-success", "Now viewing the level [#00B4DB%name%&f].");
 
             this.put("#18", "Leaderboard Command");
-            this.put("command-lead-description", "Show the leaderboard for a level");
-            this.put("command-lead-header", "&f&lTop 10 Players for #00B4DB%level%");
-            this.put("command-lead-entry", List.of(
+            this.put("command-leaderboard-description", "Show the leaderboard for a level");
+            this.put("command-leaderboard-header", "&f&lTop 10 Players for #00B4DB%level%");
+            this.put("command-leaderboard-entry", List.of(
                     "#00B4DB&l[Rank] &7- &f#%rank% &7| #00B4DB&l[Player] &7- &f%player%",
                     "#00B4DB&l[Time] &7- &f%time% &7| #00B4DB&l[Date] &7- &f%completed%",
                     " "
@@ -119,8 +119,8 @@ public class EnglishLocale implements Locale {
             this.put("region-not-found", "You are not in the correct region to do this.");
             this.put("parkour-finish", "You have finished the parkour level [#00B4DB%level%&f] in #00B4DB%time%&f.");
             this.put("parkour-finish-new-best", "You have beat your person best for [#00B4DB%level%&f] in #00B4DB%time%&f! Your previous best was #00B4DB%best%&f.");
-            this.put("parkour-max-attempts", "You have reached the maximum number of attempts for [#00B4DB%level%&f] (%attempts%/%max_attempts%.");
-            this.put("parkour-max-completions", "You have reached the maximum number of completions for [#00B4DB%level%&f] (%completions%/%max_completions%(.");
+            this.put("parkour-max-attempts", "You have reached the maximum number of attempts for [#00B4DB%level%&f] (%attempts%/%max_attempts%).");
+            this.put("parkour-max-completions", "You have reached the maximum number of completions for [#00B4DB%level%&f] (%completions%/%max_completions%).");
 
             this.put("#24", "Argument Handler Messages");
             this.put("argument-handler-level", "Parkour Level [%input%] doesn't exist.");

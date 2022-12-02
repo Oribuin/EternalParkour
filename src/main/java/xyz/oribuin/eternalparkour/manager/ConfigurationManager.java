@@ -4,7 +4,9 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.config.CommentedFileConfiguration;
 import dev.rosewood.rosegarden.config.RoseSetting;
 import dev.rosewood.rosegarden.manager.AbstractConfigurationManager;
+import org.bukkit.Color;
 import xyz.oribuin.eternalparkour.EternalParkour;
+import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 public class ConfigurationManager extends AbstractConfigurationManager {
 
@@ -17,14 +19,18 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         LEADERBOARD_DATE_FORMAT("leaderboard.date-format", "dd/MMM/yyyy HH:mm:ss", "The date format to use for the leaderboard & stats."),
 
         // Active running settings
-        RUNNER_TIME_ENABLED("runner-time.enabled", true, "Should the current time be shown on the runner's HUD?"),
-        RUNNER_TIMER_INTERVAL("runner-timer.interval", 1, "The amount of ticks between runner timer updates (Actionbar Message)."),
+        RUNNER_TIME_ENABLED("runner-timer.enabled", true, "Should the current time be shown on the runner's HUD?"),
+        RUNNER_TIMER_INTERVAL("runner-timer.update-interval", 1, "The amount of ticks between runner timer updates (Actionbar Message)."),
         RUNNER_TIMER_USE_MINIMESSAGE("runner-timer.use-minimessage", false, "Use MiniMessage for the runner timer actionbar message. (Requires PaperMC)", "https://docs.adventure.kyori.net/minimessage/index.html"),
-        RUNNER_TIME_MESSAGE("runner-time.message", "<gradient:#00B4DB:#0083B0>Time &7- &f%time%", "The message to display in the actionbar for the runner timer."),
+        RUNNER_TIME_MESSAGE("runner-timer.message", "<gradient:#00B4DB:#0083B0>Time &7- &f%time%", "The message to display in the actionbar for the runner timer."),
 
         // Editor Task Settings
         EDITOR_TASK_ENABLED("editor-task.enabled", true, "Should the editor task be enabled?", "This task will show the player visual indicators for the level."),
-        EDITOR_TASK_INTERVAL("editor-task.interval", 5, "The amount of ticks between editor task updates."),
+        EDITOR_TASK_INTERVAL("editor-task.update-interval", 5, "The amount of ticks between editor task updates."),
+        EDITOR_TASK_START_COLOR("editor-task.start-region-color", "#32CD32", "The color of the start region."),
+        EDITOR_TASK_FINISH_COLOR("editor-task.finish-region-color", "#FF0000", "The color of the end region."),
+        EDITOR_TASK_CHECKPOINT_COLOR("editor-task.checkpoint-region-color", "#FFFF00", "The color of the checkpoint region."),
+        EDITOR_TASK_LEVEL_COLOR("editor-task.level-region-color", "#6495ED", "The color of the parkour region."),
         ;
 
         private final String key;
@@ -67,6 +73,11 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         public CommentedFileConfiguration getBaseConfig() {
             return EternalParkour.getInstance().getManager(ConfigurationManager.class).getConfig();
         }
+
+        public Color getColor() {
+            return PluginUtils.getColor(this.getString());
+        }
+
     }
 
     public ConfigurationManager(RosePlugin rosePlugin) {

@@ -1,6 +1,8 @@
 package xyz.oribuin.eternalparkour.util;
 
+import org.bukkit.Color;
 import org.bukkit.Location;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 
@@ -168,5 +170,13 @@ public final class PluginUtils {
         }
     }
 
+    public static @NotNull Color getColor(String hex) {
+        try {
+            var javaColor = java.awt.Color.decode(hex);
+            return Color.fromRGB(javaColor.getRed(), javaColor.getGreen(), javaColor.getBlue());
+        } catch (IllegalArgumentException e) {
+            return Color.BLACK;
+        }
+    }
 
 }

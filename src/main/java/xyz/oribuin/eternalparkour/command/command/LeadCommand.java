@@ -38,7 +38,7 @@ public class LeadCommand extends RoseCommand {
                     .addPlaceholder("level", newLevel.getId())
                     .addPlaceholder("average", newLevel.getAverageTime());
 
-            locale.sendSimpleMessage(context.getSender(), "command-lead-header", placeholders.build());
+            locale.sendSimpleMessage(context.getSender(), "command-leaderboard-header", placeholders.build());
             // Split into pages of 10
             Map<Integer, UserData> topPlayers = this.splitMap(newLevel.getTopUsers(), page == null ? 1 : page, Setting.LEADERBOARD_PLAYERS_PER_PAGE.getInt());
 
@@ -51,7 +51,7 @@ public class LeadCommand extends RoseCommand {
                         .addPlaceholder("attempts", data.getAttempts())
                         .addPlaceholder("completed", PluginUtils.parseToDate(data.getBestTimeAchieved()));
 
-                List<String> messages = locale.getLocaleMessages("command-lead-entry", placeholders.build());
+                List<String> messages = locale.getLocaleMessages("command-leaderboard-entry", placeholders.build());
                 messages.forEach(context.getSender()::sendMessage);
             });
         });
@@ -60,17 +60,22 @@ public class LeadCommand extends RoseCommand {
 
     @Override
     protected String getDefaultName() {
-        return "lead";
+        return "leaderboard";
+    }
+
+    @Override
+    protected List<String> getDefaultAliases() {
+        return  List.of("lead", "top");
     }
 
     @Override
     public String getDescriptionKey() {
-        return "command-lead-description";
+        return "command-leaderboard-description";
     }
 
     @Override
     public String getRequiredPermission() {
-        return "eternalparkour.command.lead";
+        return "eternalparkour.command.leaderboard";
     }
 
     private Map<Integer, UserData> splitMap(Map<Integer, UserData> map, int page, int maxPerPage) {

@@ -1014,6 +1014,9 @@ public class ParkourManager extends Manager {
     public void deleteLevelData(@NotNull Level level) {
         this.dataManager.deleteLevel(level.getId());
         this.calculateLevel(level);
+
+        level.setTimesCompleted(0);
+        this.saveLevel(level);
     }
 
     @Override

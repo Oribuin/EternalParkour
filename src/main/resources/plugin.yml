@@ -7,3 +7,16 @@ description: A parkour plugin times, checkpoints, leaderboards and more.
 softdepend:
   - PlaceholderAPI
   - Multiverse-Core
+permissions:
+  eternalparkour.*:
+    description: Gives access to all commands.
+    default: op
+    children:
+      - eternalparkour.use
+      - eternalparkour.reload
+      - eternalparkour.admin
+      - eternalparkour.create
+      - eternalparkour.delete
+      - eternalparkour.edit
+      - eternalparkour.leaderboard
+      - eternalparkour.stats
