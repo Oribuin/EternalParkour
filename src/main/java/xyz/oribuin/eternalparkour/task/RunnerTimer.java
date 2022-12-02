@@ -27,8 +27,6 @@ public class RunnerTimer extends BukkitRunnable {
     private final String timerMessage;
     private final boolean useMiniMessage;
 
-    private final SimpleDateFormat formatter = new SimpleDateFormat("mm:ss.SSS");
-
     public RunnerTimer(EternalParkour plugin) {
         this.manager = plugin.getManager(ParkourManager.class);
         this.timerMessage = Setting.RUNNER_TIME_MESSAGE.getString();
@@ -49,7 +47,7 @@ public class RunnerTimer extends BukkitRunnable {
                 continue;
             }
 
-            var placeholders = StringPlaceholders.single("time", formatter.format(new Date((current - runner.getStartTime()))));
+            var placeholders = StringPlaceholders.single("time", PluginUtils.parseToScore(current - runner.getStartTime()));
             if (PluginUtils.usingPaper() && useMiniMessage) {
                 var miniMessage = MiniMessage.miniMessage()
                         .deserialize(PAPI.apply(player, placeholders.apply(timerMessage)));

@@ -17,8 +17,10 @@ public class _1_CreateInitialTables extends DataMigration {
         final var createTimesTable = "CREATE TABLE IF NOT EXISTS " + tablePrefix + "data (`player` VARCHAR(36), " +
                 "`level` TEXT," +
                 "`completed` INT, " +
+                "`username` TEXT, " +
                 "`attempts` INT, " +
                 "`bestTime` LONG, " +
+                "`bestTimeAchieved` LONG, " +
                 "`lastTime` LONG, " +
                 "`lastCompletion` LONG, " +
                 "`totalTimes` TEXT, " +

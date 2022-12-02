@@ -114,7 +114,7 @@ public class RegionListeners implements Listener {
 
         if (level.getCheckpoints().size() > 0) {
             var checkpoint = level.getCheckpoint(player.getLocation());
-            if (this.manager.isPlaying(player.getUniqueId()) && checkpoint != null ) {
+            if (this.manager.isPlaying(player.getUniqueId()) && checkpoint != null) {
 
                 // Don't change the checkpoint if it was already hit
                 if (session.getCheckpoint() != null && checkpoint.getKey() <= session.getCheckpoint().getKey()) {
@@ -131,16 +131,12 @@ public class RegionListeners implements Listener {
         // Check if the player is going from parkour region -> finish region.
         if (level.isParkourRegion(fromRegion) && level.isFinishRegion(region) && session != null) {
             this.manager.finishRun(player);
-            this.plugin.getServer().getPluginManager().callEvent(new PlayerFinishLevelEvent(player, level, session));
             return;
         }
 
         // Check if the player went from a start region to a parkour region.
         if (level.isStartRegion(fromRegion) && level.isParkourRegion(region) && session == null) {
             session = this.manager.startRun(player, level);
-            if (session != null) {
-                this.plugin.getServer().getPluginManager().callEvent(new PlayerStartLevelEvent(player, level, session));
-            }
         }
 
         // Check if a player went from a parkour region to a start region.

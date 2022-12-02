@@ -41,10 +41,7 @@ public class EditCommand extends RoseCommand {
         if (command == null && context.getSender() instanceof Player player) {
             this.rosePlugin.getManager(ParkourManager.class).stopEditing(player);
             this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "command-edit-success");
-            return;
         }
-
-        // This is a empty command, it's only used to register the sub commands
     }
 
     @Override

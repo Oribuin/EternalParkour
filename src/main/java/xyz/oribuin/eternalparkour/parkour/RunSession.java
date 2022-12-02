@@ -4,17 +4,16 @@ import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
 public class RunSession {
 
-    private final @NotNull UUID player;
-    private final @NotNull Level level;
-    private final long startTime;
-    private long endTime;
-    private @Nullable Map.Entry<Integer, Location> checkpoint;
+    private final @NotNull UUID player; // The user who is running the level
+    private final @NotNull Level level; // The level the user is running
+    private final long startTime; // The time the user started the level
+    private long endTime; // The time the user finished the level
+    private @Nullable Map.Entry<Integer, Location> checkpoint; // The last checkpoint the user reached
 
     public RunSession(@NotNull UUID player, @NotNull Level level) {
         this.player = player;

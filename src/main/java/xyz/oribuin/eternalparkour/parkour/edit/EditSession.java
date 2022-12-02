@@ -7,9 +7,9 @@ import xyz.oribuin.eternalparkour.parkour.Region;
 
 public class EditSession {
 
-    private @NotNull Level level;
-    private @NotNull EditType type;
-    private @Nullable Region region;
+    private @NotNull Level level; // Level being edited
+    private @NotNull EditType type; // Type of edit
+    private @Nullable Region region; // Region of the level being edited
 
     public EditSession(@NotNull Level level, @NotNull EditType type) {
         this.level = level;

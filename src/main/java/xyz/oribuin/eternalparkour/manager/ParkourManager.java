@@ -7,11 +7,14 @@ import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.oribuin.eternalparkour.action.PluginAction;
+import xyz.oribuin.eternalparkour.event.PlayerFinishLevelEvent;
+import xyz.oribuin.eternalparkour.event.PlayerStartLevelEvent;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
@@ -207,6 +210,14 @@ public class ParkourManager extends Manager {
             var completed = levels.getInt(key + ".times-completed");
             level.setTimesCompleted(completed);
 
+            // Get the max amount of times the level can be completed
+            var maxCompleted = levels.getInt(key + ".max-completions");
+            level.setMaxCompletions(maxCompleted);
+
+            // Get the max amount of times the level can be attempted
+            var maxAttempts = levels.getInt(key + ".max-attempts");
+            level.setMaxAttempts(maxAttempts);
+
             // Calculate the level's leaderboard
             this.calculateLevel(level);
 
@@ -231,6 +242,8 @@ public class ParkourManager extends Manager {
         this.levelConfig.set(startPath + ".enabled", level.isEnabled());
         this.levelConfig.set(startPath + ".cooldown", level.getCooldown());
         this.levelConfig.set(startPath + ".times-completed", level.getTimesCompleted());
+        this.levelConfig.set(startPath + ".max-attempts", level.getMaxAttempts());
+        this.levelConfig.set(startPath + ".max-completions", level.getMaxCompletions());
 
         // Save the commands to run
         this.levelConfig.set(startPath + ".commands", level.getCommands().stream()
@@ -332,6 +345,22 @@ public class ParkourManager extends Manager {
         this.levelConfig.set("levels." + level.getId(), null);
         this.levelConfig.save();
 
+        // Delete all active editor sessions for this level
+        var levelEditors = new HashMap<>(this.levelEditors);
+        levelEditors.forEach((player, editor) -> {
+            if (editor.getLevel().equals(level)) {
+                this.levelEditors.remove(player);
+            }
+        });
+
+        // Delete all active player sessions for this level
+        var activeRunners = new HashMap<>(this.activeRunners);
+        activeRunners.forEach((player, runner) -> {
+            if (runner.getLevel().equals(level)) {
+                this.activeRunners.remove(player);
+            }
+        });
+
         // Delete all the level data from the database
         this.dataManager.deleteLevel(level.getId());
     }
@@ -388,7 +417,7 @@ public class ParkourManager extends Manager {
      * @param level The level
      * @return The player's level data
      */
-    @Nullable
+    @NotNull
     public UserData getUser(@NotNull UUID uuid, @NotNull String level) {
         return this.dataManager.getData(uuid, level);
     }
@@ -399,7 +428,7 @@ public class ParkourManager extends Manager {
      * @param uuid The uuid of the player
      * @return A list of all the player's level data
      */
-    @Nullable
+    @NotNull
     public Map<String, UserData> getUser(@NotNull UUID uuid) {
         return this.dataManager.getData(uuid);
     }
@@ -414,11 +443,23 @@ public class ParkourManager extends Manager {
     }
 
     /**
+     * Delete a user's level data for a level
+     *
+     * @param uuid  The uuid of the player
+     * @param level The level
+     */
+    public void deleteUser(@NotNull UUID uuid, @NotNull Level level) {
+        var data = this.dataManager.getData(uuid).get(level.getId());
+        if (data != null)
+            this.dataManager.deleteUser(data);
+    }
+
+    /**
      * Delete a player's level data
      *
      * @param userData The player's level data
      */
-    public void deleteUserData(@NotNull UserData userData) {
+    public void deleteUser(@NotNull UserData userData) {
         this.dataManager.deleteUser(userData);
     }
 
@@ -560,12 +601,6 @@ public class ParkourManager extends Manager {
                 .average()
                 .orElse(0);
 
-//        long averageBestTime = (long) levelData.stream()
-//                .filter(userData -> userData.getBestTime() != -1)
-//                .mapToLong(UserData::getBestTime)
-//                .average()
-//                .orElse(-1);
-
         level.setAverageTime(averageBestTime);
 
         // Calculate the top times for the level into Map<Integer, UserData>
@@ -573,7 +608,7 @@ public class ParkourManager extends Manager {
         var sortedTimes = levelData.stream()
                 .filter(userData -> userData.getBestTime() != -1)
                 .sorted(Comparator.comparingLong(UserData::getBestTime))
-                .limit(Setting.LEADERBOARD_MAX_SIZE.getInt())
+                .limit(Setting.LEADERBOARD_MAX_SIZE.getInt() == -1 ? levelData.size() : Setting.LEADERBOARD_MAX_SIZE.getInt()) // If the max size is -1, show all players
                 .toList();
 
         for (int i = 0; i < sortedTimes.size(); i++) {
@@ -603,8 +638,8 @@ public class ParkourManager extends Manager {
         if (this.levelEditors.containsKey(player.getUniqueId()) && this.levelEditors.get(player.getUniqueId()).getType() != EditType.VIEWING)
             return null;
 
-        //Don't allow players to start a level if they are in creative mode or spectator mode
-        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
+        // Don't allow players to start a level if they are in spectator mode or flying
+        if (player.getGameMode() == GameMode.SPECTATOR || player.isFlying()) {
             return null;
         }
 
@@ -614,8 +649,48 @@ public class ParkourManager extends Manager {
             return null;
         }
 
+        // current data for the player in the level
+        var levelData = this.getUser(player.getUniqueId(), level.getId());
+        final var plc = StringPlaceholders.builder()
+                .addPlaceholder("level", level.getId())
+                .addPlaceholder("attempts", levelData.getAttempts())
+                .addPlaceholder("completions", levelData.getCompletions())
+                .addPlaceholder("max_attempts", level.getMaxAttempts())
+                .addPlaceholder("max_completions", level.getMaxCompletions())
+                .build();
+
+
+        if (level.getMaxAttempts() > 0 && levelData.getAttempts() >= level.getMaxAttempts()) {
+            locale.sendMessage(player, "parkour-max-attempts", plc);
+
+            // Teleport the player to the level's spawn
+            if (level.getTeleport() != null) {
+                this.teleport(player, level.getTeleport());
+            }
+
+            return null;
+        }
+
+        if (level.getMaxCompletions() > 0 && levelData.getCompletions() >= level.getMaxCompletions()) {
+            locale.sendMessage(player, "parkour-max-completions", plc);
+
+            // Teleport the player to the level's spawn
+            if (level.getTeleport() != null) {
+                this.teleport(player, level.getTeleport());
+            }
+
+            return null;
+        }
+
         // Create a new parkour session
         RunSession parkourRun = new RunSession(player.getUniqueId(), level);
+
+        var event = new PlayerStartLevelEvent(player, level, parkourRun);
+        this.rosePlugin.getServer().getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            return null;
+        }
 
         this.activeRunners.put(player.getUniqueId(), parkourRun);
         return parkourRun;
@@ -640,20 +715,23 @@ public class ParkourManager extends Manager {
         if (this.levelEditors.containsKey(player.getUniqueId()) && this.levelEditors.get(player.getUniqueId()).getType() != EditType.VIEWING)
             return;
 
-        //Don't allow players to start a level if they are in creative mode or spectator mode
-        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
+        // Don't allow players to finish a level if they are in spectator mode or flying
+        if (player.getGameMode() == GameMode.SPECTATOR || player.isFlying()) {
             return;
         }
 
         var parkourRun = this.activeRunners.get(player.getUniqueId());
         parkourRun.setEndTime(finishTime);
 
+        var event = new PlayerFinishLevelEvent(player, level, parkourRun);
+        this.rosePlugin.getServer().getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return;
+        }
+
         this.activeRunners.remove(player.getUniqueId()); // Remove the player from the active runners
 
         var data = this.getUser(player.getUniqueId(), level.getId());
-        if (data == null)
-            data = new UserData(player.getUniqueId(), level.getId());
-
         if (level.getTeleport() != null)
             this.teleport(player, level.getTeleport());
 
@@ -666,16 +744,17 @@ public class ParkourManager extends Manager {
         var completionTime = (parkourRun.getEndTime() - parkourRun.getStartTime());
 
         // Update the player's data
+        data.setName(player.getName());
         data.setLastTime(completionTime);
         data.setLastCompletion(parkourRun.getEndTime());
         data.setAttempts(data.getAttempts() + 1);
-        data.setCompleted(data.getCompleted() + 1);
+        data.setCompletions(data.getCompletions() + 1);
         data.getTotalTimes().add(data.getLastTime());
 
         final var plc = StringPlaceholders.builder()
                 .addPlaceholder("level", level.getId())
                 .addPlaceholder("time", formatter.format(new Date(completionTime)))
-                .addPlaceholder("completion", data.getCompleted())
+                .addPlaceholder("completion", data.getCompletions())
                 .addPlaceholder("attempts", data.getAttempts())
                 .addPlaceholder("best", formatter.format(new Date(data.getBestTime())))
                 .build();
@@ -686,7 +765,10 @@ public class ParkourManager extends Manager {
         } else {
             newBestTime = true;
             data.setBestTime(completionTime);
+            data.setBestTimeAchieved(parkourRun.getEndTime());
             this.cacheUser(data);
+
+            this.calculateLevel(level); // Calculate the level again, since the best time has changed and who knows, maybe the player is now in the top 10
         }
 
         // Update the level's data
@@ -909,6 +991,29 @@ public class ParkourManager extends Manager {
         }
 
         return users;
+    }
+
+    /**
+     * Check if the player's username is valid
+     *
+     * @param player The player
+     */
+    public void checkUserName(OfflinePlayer player) {
+        var dataMap = new HashMap<>(this.getUser(player.getUniqueId()));
+        for (var data : dataMap.values()) {
+            if (data.checkUser(player))
+                this.saveUserData(data);
+        }
+    }
+
+    /**
+     * Delete all playerdata for a level
+     *
+     * @param level The level
+     */
+    public void deleteLevelData(@NotNull Level level) {
+        this.dataManager.deleteLevel(level.getId());
+        this.calculateLevel(level);
     }
 
     @Override

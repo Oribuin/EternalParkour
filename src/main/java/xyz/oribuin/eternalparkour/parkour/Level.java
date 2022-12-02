@@ -4,12 +4,12 @@ import org.bukkit.Location;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import xyz.oribuin.eternalparkour.action.Action;
-import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class Level {
 
@@ -25,6 +25,8 @@ public class Level {
     private @NotNull Map<Integer, UserData> topUsers; // Top users who have completed the level
     private long cooldown; // The cooldown for the level rewards
     private boolean enabled; // Whether the level is enabled or not
+    private int maxAttempts; // The maximum amount of attempts the player can have
+    private int maxCompletions; // The maximum amount of completions the player can have
 
     public Level(@NotNull String id) {
         this.id = id;
@@ -38,6 +40,8 @@ public class Level {
         this.teleport = null;
         this.cooldown = 0L;
         this.enabled = true;
+        this.maxAttempts = -1;
+        this.maxCompletions = -1;
     }
 
     /**
@@ -108,6 +112,45 @@ public class Level {
         return null;
     }
 
+    /**
+     * Get the current leaderboard position of a user
+     *
+     * @param uuid The uuid of the user
+     * @return The position of the user
+     */
+    public int getLeaderboardPosition(@NotNull UUID uuid) {
+        for (var entry : this.topUsers.entrySet()) {
+            if (entry.getValue().getPlayer().equals(uuid))
+                return entry.getKey();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get a user's data in the leaderboard
+     *
+     * @param uuid The uuid of the user
+     * @return The user's data
+     */
+    public UserData getLeaderboardData(@NotNull UUID uuid) {
+        for (var entry : this.topUsers.entrySet()) {
+            if (entry.getValue().getPlayer().equals(uuid))
+                return entry.getValue();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the data in the leaderboard at a position
+     *
+     * @param position The position of the user
+     * @return The user's data
+     */
+    public UserData getLeaderboardData(int position) {
+        return this.topUsers.get(position);
+    }
 
     public @NotNull String getId() {
         return id;
@@ -203,6 +246,22 @@ public class Level {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getMaxAttempts() {
+        return maxAttempts;
+    }
+
+    public void setMaxAttempts(int maxAttempts) {
+        this.maxAttempts = maxAttempts;
+    }
+
+    public int getMaxCompletions() {
+        return maxCompletions;
+    }
+
+    public void setMaxCompletions(int maxCompletions) {
+        this.maxCompletions = maxCompletions;
     }
 
 }

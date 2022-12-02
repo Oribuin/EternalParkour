@@ -4,52 +4,57 @@ import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
+import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
+import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
+import xyz.oribuin.eternalparkour.parkour.UserData;
+import xyz.oribuin.eternalparkour.util.PluginUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class LeadCommand extends RoseCommand {
-
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yyyy HH:mm:ss");
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss.SSS");
 
     public LeadCommand(RosePlugin rosePlugin, RoseCommandWrapper wrapper) {
         super(rosePlugin, wrapper);
     }
 
     @RoseExecutable
-    public void execute(CommandContext context, Level level) {
+    public void execute(CommandContext context, Level level, @Optional Integer page) {
         final var manager = this.rosePlugin.getManager(ParkourManager.class);
         final var locale = this.rosePlugin.getManager(LocaleManager.class);
 
-        // We get the top 10 players for the level, this is done asynchronously.
+        // We get the top players for the level, this is done asynchronously.
         this.rosePlugin.getServer().getScheduler().runTaskAsynchronously(this.rosePlugin, () -> {
             var newLevel = manager.calculateLevel(level);
 
             final var placeholders = StringPlaceholders.builder()
-                    .addPlaceholder("id", newLevel.getId())
+                    .addPlaceholder("level", newLevel.getId())
                     .addPlaceholder("average", newLevel.getAverageTime());
 
             locale.sendSimpleMessage(context.getSender(), "command-lead-header", placeholders.build());
-            newLevel.getTopUsers().forEach((integer, data) -> {
+            // Split into pages of 10
+            Map<Integer, UserData> topPlayers = this.splitMap(newLevel.getTopUsers(), page == null ? 1 : page, Setting.LEADERBOARD_PLAYERS_PER_PAGE.getInt());
+
+            topPlayers.forEach((integer, data) -> {
                 var player = Bukkit.getOfflinePlayer(data.getPlayer());
 
                 placeholders.addPlaceholder("rank", integer)
                         .addPlaceholder("player", player.getName())
-                        .addPlaceholder("time", timeFormat.format(new Date(data.getBestTime())))
+                        .addPlaceholder("time", PluginUtils.parseToScore(data.getBestTime()))
                         .addPlaceholder("attempts", data.getAttempts())
-                        .addPlaceholder("completed", dateFormat.format(new Date(data.getLastCompletion())));
+                        .addPlaceholder("completed", PluginUtils.parseToDate(data.getBestTimeAchieved()));
 
-                locale.sendSimpleMessage(context.getSender(), "command-lead-entry", placeholders.build());
+                List<String> messages = locale.getLocaleMessages("command-lead-entry", placeholders.build());
+                messages.forEach(context.getSender()::sendMessage);
             });
         });
-
 
     }
 
@@ -66,6 +71,21 @@ public class LeadCommand extends RoseCommand {
     @Override
     public String getRequiredPermission() {
         return "eternalparkour.command.lead";
+    }
+
+    private Map<Integer, UserData> splitMap(Map<Integer, UserData> map, int page, int maxPerPage) {
+        Map<Integer, UserData> newMap = new HashMap<>();
+        int start = (page - 1) * maxPerPage;
+        int end = start + maxPerPage;
+        int i = 0;
+        for (Map.Entry<Integer, UserData> entry : map.entrySet()) {
+            if (i >= start && i < end) {
+                newMap.put(entry.getKey(), entry.getValue());
+            }
+            i++;
+        }
+
+        return newMap;
     }
 
 }

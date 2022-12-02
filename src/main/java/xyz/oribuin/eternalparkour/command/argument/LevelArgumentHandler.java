@@ -30,7 +30,15 @@ public class LevelArgumentHandler extends RoseCommandArgumentHandler<Level> {
     @Override
     protected List<String> suggestInternal(RoseCommandArgumentInfo argumentInfo, ArgumentParser argumentParser) {
         argumentParser.next();
-        return this.rosePlugin.getManager(ParkourManager.class).getLevels().stream().map(Level::getId).toList();
+
+        List<String> levels = this.rosePlugin.getManager(ParkourManager.class).getLevels().stream()
+                .map(Level::getId)
+                .toList();
+
+        if (levels.isEmpty())
+            return List.of("<no levels>");
+
+        return levels;
     }
 
 }

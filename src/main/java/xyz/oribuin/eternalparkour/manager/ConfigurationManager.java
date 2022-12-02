@@ -10,8 +10,11 @@ public class ConfigurationManager extends AbstractConfigurationManager {
 
     public enum Setting implements RoseSetting {
         // Leaderboard Settings
-        LEADERBOARD_MAX_SIZE("leaderboard-max-size", 10, "The amount of players to show on the leaderboard."),
-        LEADERBOARD_UPDATE_INTERVAL("leaderboard-update-interval", 12000, "The amount of ticks between leaderboard updates. (20 ticks = 1 second)"),
+        LEADERBOARD_MAX_SIZE("leaderboard.max-size", 10, "The amount of players to show on the leaderboard."),
+        LEADERBOARD_AUTO_UPDATE("leaderboard.auto-update", true, "Should the leaderboard update automatically?"),
+        LEADERBOARD_UPDATE_INTERVAL("leaderboard.update-interval", 12000, "The amount of ticks between leaderboard updates. (20 ticks = 1 second)"),
+        LEADERBOARD_PLAYERS_PER_PAGE("leaderboard.players-per-page", 10, "The amount of players to show per page on the leaderboard."),
+        LEADERBOARD_DATE_FORMAT("leaderboard.date-format", "dd/MMM/yyyy HH:mm:ss", "The date format to use for the leaderboard & stats."),
 
         // Active running settings
         RUNNER_TIME_ENABLED("runner-time.enabled", true, "Should the current time be shown on the runner's HUD?"),

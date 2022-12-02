@@ -14,6 +14,7 @@ import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.DataManager;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.task.EditorTimer;
+import xyz.oribuin.eternalparkour.task.LeaderboardTimer;
 import xyz.oribuin.eternalparkour.task.RunnerTimer;
 
 import java.util.Collections;
@@ -24,7 +25,7 @@ public class EternalParkour extends RosePlugin {
     private static EternalParkour instance;
 
     public EternalParkour() {
-        super(-1, -1, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
+        super(-1, 16982, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
         instance = this;
     }
 
@@ -59,6 +60,9 @@ public class EternalParkour extends RosePlugin {
 
         if (Setting.EDITOR_TASK_ENABLED.getBoolean())
             new EditorTimer(this).runTaskTimerAsynchronously(this, 0, Setting.EDITOR_TASK_INTERVAL.getInt());
+
+        if (Setting.LEADERBOARD_AUTO_UPDATE.getBoolean())
+            new LeaderboardTimer(this).runTaskTimerAsynchronously(this, 0, Setting.LEADERBOARD_UPDATE_INTERVAL.getInt());
     }
 
     @Override

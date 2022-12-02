@@ -39,8 +39,6 @@ public class EditorTimer extends BukkitRunnable {
 
     @Override
     public void run() {
-
-        // TODO: Fix all boxes being displayed one block smaller than they should be if pos1 is smaller than pos2
         for (var entry : this.manager.getLevelEditors().entrySet()) {
             var player = Bukkit.getPlayer(entry.getKey());
 
