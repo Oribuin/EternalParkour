@@ -1,5 +1,7 @@
 package xyz.oribuin.eternalparkour.manager;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.database.DataMigration;
@@ -11,18 +13,15 @@ import xyz.oribuin.eternalparkour.database.migration._1_CreateInitialTables;
 import xyz.oribuin.eternalparkour.parkour.UserData;
 import xyz.oribuin.eternalparkour.util.TimesCompleted;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-// TODO Add more @NotNull and @Nullable annotations
 public class DataManager extends AbstractDataManager {
 
     // UUID = Player's UUID, String = Parkour ID, UserData = Parkour Data
-    private final Map<UUID, Map<String, UserData>> userData = new HashMap<>();
+    private final Table<UUID, String, UserData> userData = HashBasedTable.create();
     private final Gson gson = new Gson();
 
     public DataManager(RosePlugin rosePlugin) {
@@ -35,10 +34,9 @@ public class DataManager extends AbstractDataManager {
      * @param level The level name to get the data for
      * @return A list of all the user data for the level
      */
-    public List<UserData> getLevelData(String level) {
+    public @NotNull List<UserData> getLevelData(@NotNull String level) {
         return this.userData.values().stream()
-                .map(map -> map.get(level.toLowerCase()))
-                .filter(Objects::nonNull)
+                .filter(data -> data.getLevel().equals(level))
                 .toList();
     }
 
@@ -47,11 +45,8 @@ public class DataManager extends AbstractDataManager {
      *
      * @param data The data to cache
      */
-    public void cacheUser(UserData data) {
-        var mapData = this.userData.getOrDefault(data.getPlayer(), new HashMap<>());
-
-        mapData.put(data.getLevel(), data);
-        this.userData.put(data.getPlayer(), mapData);
+    public void cacheUser(@NotNull UserData data) {
+        this.userData.put(data.getPlayer(), data.getLevel(), data);
     }
 
     /**
@@ -59,14 +54,17 @@ public class DataManager extends AbstractDataManager {
      *
      * @param player The player to save
      */
-    public void saveUser(Player player) {
-        var data = this.userData.get(player.getUniqueId());
-        if (data == null)
+    public void saveUser(@NotNull Player player) {
+        List<UserData> data = this.userData.values().stream()
+                .filter(x -> x.getPlayer().equals(player.getUniqueId()))
+                .toList();
+
+        if (data.isEmpty())
             return;
 
         this.async(task -> this.databaseConnector.connect(connection -> {
-            for (var entry : data.values()) {
-                final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+            for (var entry : this.userData.values()) {
+                final String update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
                         "player, " +
                         "`level`, " +
                         "`username`, " +
@@ -101,11 +99,11 @@ public class DataManager extends AbstractDataManager {
      *
      * @param data The user's data
      */
-    public void saveUser(UserData data) {
+    public void saveUser(@NotNull UserData data) {
         this.cacheUser(data);
 
         this.async(task -> this.databaseConnector.connect(connection -> {
-            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+            final String update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
                     "player, " +
                     "`level`, " +
                     "`username`, " +
@@ -139,11 +137,10 @@ public class DataManager extends AbstractDataManager {
      *
      * @param data The user's data
      */
-    public void deleteUser(UserData data) {
-        this.userData.remove(data.getPlayer());
+    public void deleteUser(@NotNull UserData data) {
+        this.userData.remove(data.getPlayer(), data.getLevel());
 
-        final var delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ? AND level = ?";
-
+        final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ? AND level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
             try (var statement = connection.prepareStatement(delete)) {
                 statement.setString(1, data.getPlayer().toString());
@@ -158,11 +155,10 @@ public class DataManager extends AbstractDataManager {
      *
      * @param player The player to delete
      */
-    public void deleteUser(UUID player) {
-        this.userData.remove(player);
+    public void deleteUser(@NotNull UUID player) {
+        this.userData.row(player).clear();
 
-        final var delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ?";
-
+        final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
             try (var statement = connection.prepareStatement(delete)) {
                 statement.setString(1, player.toString());
@@ -176,26 +172,13 @@ public class DataManager extends AbstractDataManager {
      *
      * @param level The level to delete
      */
-    public void deleteLevel(String level) {
-        // Remove all the userdata where the level matches, use a consumer to avoid concurrent modification
-        this.userData.values().forEach(map -> map.remove(level.toLowerCase()));
-        final var delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE level = ?";
+    public void deleteLevel(@NotNull String level) {
+        this.userData.column(level).clear();
+
+        final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
             try (var statement = connection.prepareStatement(delete)) {
                 statement.setString(1, level.toLowerCase());
-                statement.executeUpdate();
-            }
-        }));
-    }
-
-    /**
-     * Delete everyones level data from the database
-     */
-    public void deleteEveryone() {
-        final var delete = "DELETE FROM " + this.getTablePrefix() + "data";
-
-        this.async(task -> this.databaseConnector.connect(connection -> {
-            try (var statement = connection.prepareStatement(delete)) {
                 statement.executeUpdate();
             }
         }));
@@ -209,9 +192,12 @@ public class DataManager extends AbstractDataManager {
      * @return The player's data for the level
      */
     @NotNull
-    public UserData getData(UUID player, String level) {
-        var data = this.userData.getOrDefault(player, new HashMap<>());
-        return data.getOrDefault(level, new UserData(player, level));
+    public UserData getData(@NotNull UUID player, @NotNull String level) {
+        UserData data = this.userData.get(player, level);
+        if (data == null)
+            data = new UserData(player, level);
+
+        return data;
     }
 
     /**
@@ -221,8 +207,8 @@ public class DataManager extends AbstractDataManager {
      * @return The player's data
      */
     @NotNull
-    public Map<String, UserData> getData(UUID player) {
-        return this.userData.getOrDefault(player, new HashMap<>());
+    public Map<String, UserData> getData(@NotNull UUID player) {
+        return this.userData.row(player);
     }
 
     /**
@@ -247,94 +233,8 @@ public class DataManager extends AbstractDataManager {
                     data.setLastTime(results.getLong("lastTime"));
                     data.setLastCompletion(results.getLong("lastCompletion"));
                     data.setTotalTimes(this.gson.fromJson(results.getString("totalTimes"), TimesCompleted.class).getTimes());
-                    this.userData.computeIfAbsent(uuid, k -> new HashMap<>()).put(data.getLevel(), data);
+                    this.userData.put(uuid, data.getLevel(), data);
                 }
-            }
-        }));
-    }
-
-    /**
-     * Save all users data to the database regardless of the level
-     */
-    public void saveAllUsers() {
-        this.async(task -> this.databaseConnector.connect(connection -> {
-
-            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
-                    "player, " +
-                    "`level`, " +
-                    "`username`, " +
-                    "completed, " +
-                    "attempts, " +
-                    "bestTime, " +
-                    "bestTimeAchieved, " +
-                    "lastTime, " +
-                    "lastCompletion, " +
-                    "totalTimes) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            try (var statement = connection.prepareStatement(update)) {
-                for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
-                    for (UserData data : entry.getValue().values()) {
-                        statement.setString(1, data.getPlayer().toString());
-                        statement.setString(2, data.getLevel().toLowerCase());
-                        statement.setString(3, data.getName());
-                        statement.setInt(4, data.getCompletions());
-                        statement.setInt(5, data.getAttempts());
-                        statement.setLong(6, data.getBestTime());
-                        statement.setLong(7, data.getBestTimeAchieved());
-                        statement.setLong(8, data.getLastTime());
-                        statement.setLong(9, data.getLastCompletion());
-                        statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                        statement.addBatch();
-                    }
-                }
-
-                statement.executeLargeBatch();
-            }
-        }));
-    }
-
-    /**
-     * Save every single's user data to the database for a specific level
-     *
-     * @param level The level to save
-     */
-    public void saveAllUsers(String level) {
-        this.async(task -> this.databaseConnector.connect(connection -> {
-
-            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
-                    "player, " +
-                    "`level`, " +
-                    "`username`, " +
-                    "completed, " +
-                    "attempts, " +
-                    "bestTime, " +
-                    "bestTimeAchieved, " +
-                    "lastTime, " +
-                    "lastCompletion, " +
-                    "totalTimes) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-            try (var statement = connection.prepareStatement(update)) {
-                for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
-                    var data = entry.getValue().get(level.toLowerCase());
-                    if (data == null)
-                        continue;
-
-                    statement.setString(1, data.getPlayer().toString());
-                    statement.setString(2, data.getLevel().toLowerCase());
-                    statement.setString(3, data.getName());
-                    statement.setInt(4, data.getCompletions());
-                    statement.setInt(5, data.getAttempts());
-                    statement.setLong(6, data.getBestTime());
-                    statement.setLong(7, data.getBestTimeAchieved());
-                    statement.setLong(8, data.getLastTime());
-                    statement.setLong(9, data.getLastCompletion());
-                    statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                    statement.addBatch();
-                }
-
-                statement.executeLargeBatch();
             }
         }));
     }
@@ -353,7 +253,7 @@ public class DataManager extends AbstractDataManager {
         this.rosePlugin.getServer().getScheduler().runTaskAsynchronously(rosePlugin, callback);
     }
 
-    public Map<UUID, Map<String, UserData>> getUserData() {
+    public Table<UUID, String, UserData> getUserData() {
         return userData;
     }
 
