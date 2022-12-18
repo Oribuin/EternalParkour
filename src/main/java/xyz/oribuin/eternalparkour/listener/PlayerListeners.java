@@ -2,9 +2,13 @@ package xyz.oribuin.eternalparkour.listener;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.DataManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
@@ -37,4 +41,27 @@ public class PlayerListeners implements Listener {
         // Save the player's data when they leave
         this.plugin.getManager(DataManager.class).saveUser(event.getPlayer());
     }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onFly(PlayerToggleFlightEvent event) {
+        Player player = event.getPlayer();
+        ParkourManager manager = this.plugin.getManager(ParkourManager.class);
+        if (manager.isPlaying(player.getUniqueId())) {
+            manager.cancelRun(player, true);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onGameModeChange(PlayerGameModeChangeEvent event) {
+        Player player = event.getPlayer();
+
+        if (!player.isOnline()) // Player might not be online.
+            return;
+
+        ParkourManager manager = this.plugin.getManager(ParkourManager.class);
+        if (manager.isPlaying(player.getUniqueId())) {
+            manager.cancelRun(player, true);
+        }
+    }
+
 }

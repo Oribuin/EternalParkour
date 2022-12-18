@@ -67,7 +67,7 @@ public class EnglishLocale implements Locale {
             this.put("command-edit-add-start-start", "Now editing the start region of [#00B4DB%name%&f].");
 
             this.put("#12", "Edit Command - Checkpoint Command");
-            this.put("command-edit-checkpoint-start", "Now editing the checkpoint region of [#00B4DB%name%&f].");
+            this.put("command-edit-checkpoints-start", "Now editing the checkpoint region of [#00B4DB%name%&f].");
 
             this.put("#13", "Edit Command - Delete Finish Command");
             this.put("command-edit-del-finish-success", "You have deleted the finish region of [#00B4DB%name%&f].");
