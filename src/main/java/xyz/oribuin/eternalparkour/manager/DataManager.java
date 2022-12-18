@@ -258,22 +258,23 @@ public class DataManager extends AbstractDataManager {
      */
     public void saveAllUsers() {
         this.async(task -> this.databaseConnector.connect(connection -> {
-            for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
-                for (UserData data : entry.getValue().values()) {
-                    final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
-                            "player, " +
-                            "`level`, " +
-                            "`username`, " +
-                            "completed, " +
-                            "attempts, " +
-                            "bestTime, " +
-                            "bestTimeAchieved, " +
-                            "lastTime, " +
-                            "lastCompletion, " +
-                            "totalTimes) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                    try (var statement = connection.prepareStatement(update)) {
+            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                    "player, " +
+                    "`level`, " +
+                    "`username`, " +
+                    "completed, " +
+                    "attempts, " +
+                    "bestTime, " +
+                    "bestTimeAchieved, " +
+                    "lastTime, " +
+                    "lastCompletion, " +
+                    "totalTimes) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            try (var statement = connection.prepareStatement(update)) {
+                for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
+                    for (UserData data : entry.getValue().values()) {
                         statement.setString(1, data.getPlayer().toString());
                         statement.setString(2, data.getLevel().toLowerCase());
                         statement.setString(3, data.getName());
@@ -284,9 +285,11 @@ public class DataManager extends AbstractDataManager {
                         statement.setLong(8, data.getLastTime());
                         statement.setLong(9, data.getLastCompletion());
                         statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                        statement.executeUpdate();
+                        statement.addBatch();
                     }
                 }
+
+                statement.executeLargeBatch();
             }
         }));
     }
@@ -298,38 +301,40 @@ public class DataManager extends AbstractDataManager {
      */
     public void saveAllUsers(String level) {
         this.async(task -> this.databaseConnector.connect(connection -> {
-            for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
-                for (UserData data : entry.getValue().values()) {
-                    if (!data.getLevel().equals(level))
+
+            final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
+                    "player, " +
+                    "`level`, " +
+                    "`username`, " +
+                    "completed, " +
+                    "attempts, " +
+                    "bestTime, " +
+                    "bestTimeAchieved, " +
+                    "lastTime, " +
+                    "lastCompletion, " +
+                    "totalTimes) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            try (var statement = connection.prepareStatement(update)) {
+                for (Map.Entry<UUID, Map<String, UserData>> entry : this.userData.entrySet()) {
+                    var data = entry.getValue().get(level.toLowerCase());
+                    if (data == null)
                         continue;
 
-                    final var update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
-                            "player, " +
-                            "`level`, " +
-                            "`username`, " +
-                            "completed, " +
-                            "attempts, " +
-                            "bestTime, " +
-                            "bestTimeAchieved, " +
-                            "lastTime, " +
-                            "lastCompletion, " +
-                            "totalTimes) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-                    try (var statement = connection.prepareStatement(update)) {
-                        statement.setString(1, data.getPlayer().toString());
-                        statement.setString(2, data.getLevel().toLowerCase());
-                        statement.setString(3, data.getName());
-                        statement.setInt(4, data.getCompletions());
-                        statement.setInt(5, data.getAttempts());
-                        statement.setLong(6, data.getBestTime());
-                        statement.setLong(7, data.getBestTimeAchieved());
-                        statement.setLong(8, data.getLastTime());
-                        statement.setLong(9, data.getLastCompletion());
-                        statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
-                        statement.executeUpdate();
-                    }
+                    statement.setString(1, data.getPlayer().toString());
+                    statement.setString(2, data.getLevel().toLowerCase());
+                    statement.setString(3, data.getName());
+                    statement.setInt(4, data.getCompletions());
+                    statement.setInt(5, data.getAttempts());
+                    statement.setLong(6, data.getBestTime());
+                    statement.setLong(7, data.getBestTimeAchieved());
+                    statement.setLong(8, data.getLastTime());
+                    statement.setLong(9, data.getLastCompletion());
+                    statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
+                    statement.addBatch();
                 }
+
+                statement.executeLargeBatch();
             }
         }));
     }
