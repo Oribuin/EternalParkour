@@ -26,7 +26,7 @@ public class EternalParkour extends RosePlugin {
     private static EternalParkour instance;
 
     public EternalParkour() {
-        super(-1, 16982, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
+        super(106817, 16982, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
         instance = this;
     }
 
