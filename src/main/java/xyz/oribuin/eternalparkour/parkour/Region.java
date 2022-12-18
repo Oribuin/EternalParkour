@@ -33,9 +33,9 @@ public class Region {
             return false;
 
         // Declare location x, y, z
-        var x = location.getBlockX();
-        var y = location.getBlockY();
-        var z = location.getBlockZ();
+        int x = location.getBlockX();
+        int y = location.getBlockY();
+        int z = location.getBlockZ();
 
         // Check if the location is inside the region
         return x >= Math.min(pos1.getX(), pos2.getX()) && x <= Math.max(pos1.getX(), pos2.getX()) &&

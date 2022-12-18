@@ -1,6 +1,7 @@
 package xyz.oribuin.eternalparkour.manager;
 
 import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.config.CommentedConfigurationSection;
 import dev.rosewood.rosegarden.config.CommentedFileConfiguration;
 import dev.rosewood.rosegarden.manager.Manager;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
@@ -8,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +62,7 @@ public class ParkourManager extends Manager {
 
         // Load all the levels from the levels folder
         this.levelData.clear();
-        var file = new File(this.rosePlugin.getDataFolder(), "levels.yml");
+        File file = new File(this.rosePlugin.getDataFolder(), "levels.yml");
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -84,7 +86,7 @@ public class ParkourManager extends Manager {
             return;
         }
 
-        var levels = this.levelConfig.getConfigurationSection("levels");
+        CommentedConfigurationSection levels = this.levelConfig.getConfigurationSection("levels");
 
         if (levels == null) {
             this.rosePlugin.getLogger().info("We couldn't find any levels in the levels.yml file.");
@@ -92,23 +94,23 @@ public class ParkourManager extends Manager {
         }
 
         // Load all the level data.
-        for (var key : levels.getKeys(false)) {
-            var level = new Level(key);
+        for (String key : levels.getKeys(false)) {
+            Level level = new Level(key);
 
             // Load the spawn location
-            var spawnWorldName = levels.getString(key + ".spawn.world");
-            var spawnX = levels.getDouble(key + ".spawn.x");
-            var spawnY = levels.getDouble(key + ".spawn.y");
-            var spawnZ = levels.getDouble(key + ".spawn.z");
-            var spawnYaw = levels.getDouble(key + ".spawn.yaw");
-            var spawnPitch = levels.getDouble(key + ".spawn.pitch");
+            String spawnWorldName = levels.getString(key + ".spawn.world");
+            double spawnX = levels.getDouble(key + ".spawn.x");
+            double spawnY = levels.getDouble(key + ".spawn.y");
+            double spawnZ = levels.getDouble(key + ".spawn.z");
+            double spawnYaw = levels.getDouble(key + ".spawn.yaw");
+            double spawnPitch = levels.getDouble(key + ".spawn.pitch");
 
             if (spawnWorldName == null) {
                 this.rosePlugin.getLogger().severe("The spawn location is not set in the levels.yml file. This is required.");
                 return;
             }
 
-            var spawnWorld = Bukkit.getWorld(spawnWorldName);
+            World spawnWorld = Bukkit.getWorld(spawnWorldName);
             if (spawnWorld == null) {
                 this.rosePlugin.getLogger().severe("The spawn world is not loaded. This is required.");
                 return;
@@ -117,81 +119,79 @@ public class ParkourManager extends Manager {
             level.setTeleport(new Location(spawnWorld, spawnX, spawnY, spawnZ, (float) spawnYaw, (float) spawnPitch));
 
             // Load the parkour regions
-            var regions = levels.getConfigurationSection(key + ".regions");
+            CommentedConfigurationSection regions = levels.getConfigurationSection(key + ".regions");
             if (regions != null) {
 
                 // This is the region where the player starts and does the parkour
-                var parkourRegions = regions.getConfigurationSection("level");
+                CommentedConfigurationSection parkourRegions = regions.getConfigurationSection("level");
                 if (parkourRegions != null) {
 
                     // Load all the parkour regions
-                    for (var regionKey : parkourRegions.getKeys(false)) {
-                        var firstPosX = parkourRegions.getDouble(regionKey + ".pos-1.x");
-                        var firstPosY = parkourRegions.getDouble(regionKey + ".pos-1.y");
-                        var firstPosZ = parkourRegions.getDouble(regionKey + ".pos-1.z");
-                        var firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
+                    for (String regionKey : parkourRegions.getKeys(false)) {
+                        double firstPosX = parkourRegions.getDouble(regionKey + ".pos-1.x");
+                        double firstPosY = parkourRegions.getDouble(regionKey + ".pos-1.y");
+                        double firstPosZ = parkourRegions.getDouble(regionKey + ".pos-1.z");
+                        Location firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
 
-                        var secondPosX = parkourRegions.getDouble(regionKey + ".pos-2.x");
-                        var secondPosY = parkourRegions.getDouble(regionKey + ".pos-2.y");
-                        var secondPosZ = parkourRegions.getDouble(regionKey + ".pos-2.z");
-                        var secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
+                        double secondPosX = parkourRegions.getDouble(regionKey + ".pos-2.x");
+                        double secondPosY = parkourRegions.getDouble(regionKey + ".pos-2.y");
+                        double secondPosZ = parkourRegions.getDouble(regionKey + ".pos-2.z");
+                        Location secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
 
                         level.getLevelRegions().add(new Region(firstPos, secondPos));
                     }
                 }
 
                 // Load the finish region
-                var finishRegion = regions.getConfigurationSection("finish");
+                CommentedConfigurationSection finishRegion = regions.getConfigurationSection("finish");
                 if (finishRegion != null) {
-                    var firstPosX = finishRegion.getDouble("pos-1.x");
-                    var firstPosY = finishRegion.getDouble("pos-1.y");
-                    var firstPosZ = finishRegion.getDouble("pos-1.z");
+                    double firstPosX = finishRegion.getDouble("pos-1.x");
+                    double firstPosY = finishRegion.getDouble("pos-1.y");
+                    double firstPosZ = finishRegion.getDouble("pos-1.z");
+                    Location firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
 
-                    var firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
+                    double secondPosX = finishRegion.getDouble("pos-2.x");
+                    double secondPosY = finishRegion.getDouble("pos-2.y");
+                    double secondPosZ = finishRegion.getDouble("pos-2.z");
+                    Location secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
 
-                    var secondPosX = finishRegion.getDouble("pos-2.x");
-                    var secondPosY = finishRegion.getDouble("pos-2.y");
-                    var secondPosZ = finishRegion.getDouble("pos-2.z");
-
-                    var secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
                     level.setFinishRegion(new Region(firstPos, secondPos));
                 }
 
-                var spawnRegion = regions.getConfigurationSection("spawn");
+                CommentedConfigurationSection spawnRegion = regions.getConfigurationSection("spawn");
                 if (spawnRegion != null) {
-                    var firstPosX = spawnRegion.getDouble("pos-1.x");
-                    var firstPosY = spawnRegion.getDouble("pos-1.y");
-                    var firstPosZ = spawnRegion.getDouble("pos-1.z");
+                    double firstPosX = spawnRegion.getDouble("pos-1.x");
+                    double firstPosY = spawnRegion.getDouble("pos-1.y");
+                    double firstPosZ = spawnRegion.getDouble("pos-1.z");
+                    Location firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
 
-                    var firstPos = new Location(spawnWorld, firstPosX, firstPosY, firstPosZ);
+                    double secondPosX = spawnRegion.getDouble("pos-2.x");
+                    double secondPosY = spawnRegion.getDouble("pos-2.y");
+                    double secondPosZ = spawnRegion.getDouble("pos-2.z");
+                    Location secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
 
-                    var secondPosX = spawnRegion.getDouble("pos-2.x");
-                    var secondPosY = spawnRegion.getDouble("pos-2.y");
-                    var secondPosZ = spawnRegion.getDouble("pos-2.z");
-
-                    var secondPos = new Location(spawnWorld, secondPosX, secondPosY, secondPosZ);
                     level.setStartRegion(new Region(firstPos, secondPos));
                 }
             }
 
             // Okay, now that we have all the region data, lets load the checkpoints
-            var checkpoints = levels.getConfigurationSection(key + ".checkpoints");
+            CommentedConfigurationSection checkpoints = levels.getConfigurationSection(key + ".checkpoints");
             if (checkpoints != null) {
                 int currentCheckpoint = 1;
-                for (var checkpointKey : checkpoints.getKeys(false)) {
-                    var x = checkpoints.getDouble(checkpointKey + ".x");
-                    var y = checkpoints.getDouble(checkpointKey + ".y");
-                    var z = checkpoints.getDouble(checkpointKey + ".z");
-                    var yaw = checkpoints.getDouble(checkpointKey + ".yaw");
-                    var pitch = checkpoints.getDouble(checkpointKey + ".pitch");
+                for (String checkpointKey : checkpoints.getKeys(false)) {
+                    double x = checkpoints.getDouble(checkpointKey + ".x");
+                    double y = checkpoints.getDouble(checkpointKey + ".y");
+                    double z = checkpoints.getDouble(checkpointKey + ".z");
+                    double yaw = checkpoints.getDouble(checkpointKey + ".yaw");
+                    double pitch = checkpoints.getDouble(checkpointKey + ".pitch");
 
-                    var location = new Location(spawnWorld, x, y, z, (float) yaw, (float) pitch);
+                    Location location = new Location(spawnWorld, x, y, z, (float) yaw, (float) pitch);
                     level.getCheckpoints().put(currentCheckpoint++, location);
                 }
             }
 
             // Load the commands
-            var commands = levels.getStringList(key + ".commands");
+            List<String> commands = levels.getStringList(key + ".commands");
             level.setCommands(
                     commands.stream().map(PluginAction::parse)
                             .filter(Objects::nonNull)
@@ -199,23 +199,23 @@ public class ParkourManager extends Manager {
             );
 
             // Load reward cooldown
-            var cooldown = levels.getInt(key + ".cooldown");
+            int cooldown = levels.getInt(key + ".cooldown");
             level.setCooldown(cooldown);
 
             // Check if the level is enabled
-            var enabled = levels.getBoolean(key + ".enabled");
+            boolean enabled = levels.getBoolean(key + ".enabled");
             level.setEnabled(enabled);
 
             // Get the amount of times the level has been completed
-            var completed = levels.getInt(key + ".times-completed");
+            int completed = levels.getInt(key + ".times-completed");
             level.setTimesCompleted(completed);
 
             // Get the max amount of times the level can be completed
-            var maxCompleted = levels.getInt(key + ".max-completions");
+            int maxCompleted = levels.getInt(key + ".max-completions");
             level.setMaxCompletions(maxCompleted);
 
             // Get the max amount of times the level can be attempted
-            var maxAttempts = levels.getInt(key + ".max-attempts");
+            int maxAttempts = levels.getInt(key + ".max-attempts");
             level.setMaxAttempts(maxAttempts);
 
             // Calculate the level's leaderboard
@@ -236,7 +236,7 @@ public class ParkourManager extends Manager {
 
         this.levelData.put(level.getId(), level);
 
-        var startPath = "levels." + level.getId();
+        String startPath = "levels." + level.getId();
 
         // Save the level data
         this.levelConfig.set(startPath + ".enabled", level.isEnabled());
@@ -274,7 +274,7 @@ public class ParkourManager extends Manager {
                 });
 
         // Save the finish region
-        var finishRegion = level.getFinishRegion();
+        Region finishRegion = level.getFinishRegion();
         if (finishRegion != null && finishRegion.getPos1() != null && finishRegion.getPos2() != null) {
             this.levelConfig.set(startPath + ".regions.finish.pos-1.x", finishRegion.getPos1().getX());
             this.levelConfig.set(startPath + ".regions.finish.pos-1.y", finishRegion.getPos1().getY());
@@ -287,7 +287,7 @@ public class ParkourManager extends Manager {
         }
 
         // Save spawn region
-        var spawnRegion = level.getStartRegion();
+        Region spawnRegion = level.getStartRegion();
         if (spawnRegion != null && spawnRegion.getPos1() != null && spawnRegion.getPos2() != null) {
             this.levelConfig.set(startPath + ".regions.spawn.pos-1.x", spawnRegion.getPos1().getX());
             this.levelConfig.set(startPath + ".regions.spawn.pos-1.y", spawnRegion.getPos1().getY());
@@ -439,7 +439,8 @@ public class ParkourManager extends Manager {
      * @param level The level
      */
     public void deleteUser(@NotNull UUID uuid, @NotNull Level level) {
-        var data = this.dataManager.getData(uuid).get(level.getId());
+        UserData data = this.dataManager.getData(uuid).get(level.getId());
+
         if (data != null)
             this.dataManager.deleteUser(data);
     }
@@ -506,7 +507,7 @@ public class ParkourManager extends Manager {
      * @return True if the location is in the finish region
      */
     public boolean isFinished(@NotNull Level level, @NotNull Location location) {
-        var region = level.getRegionAt(location);
+        Region region = level.getRegionAt(location);
         return region != null && level.isFinishRegion(region);
     }
 
@@ -553,6 +554,7 @@ public class ParkourManager extends Manager {
      * @param location The location
      * @return The level
      */
+    @Nullable
     public Level getLevel(@NotNull Location location) {
         return this.levelData.values().stream()
                 .filter(level -> level.getRegionAt(location) != null)
@@ -575,12 +577,13 @@ public class ParkourManager extends Manager {
      *
      * @param level The level
      */
+    @NotNull
     public Level calculateLevel(@NotNull Level level) {
         // Get all players who have completed the level
         List<UserData> levelData = this.dataManager.getLevelData(level.getId());
 
         // Calculate average total time completions
-        var times = new ArrayList<Long>();
+        List<Long> times = new ArrayList<>();
 
         for (UserData userData : levelData) {
             times.addAll(userData.getTotalTimes());
@@ -595,7 +598,7 @@ public class ParkourManager extends Manager {
 
         // Calculate the top times for the level into Map<Integer, UserData>
         Map<Integer, UserData> topTimes = new HashMap<>();
-        var sortedTimes = levelData.stream()
+        List<UserData> sortedTimes = levelData.stream()
                 .filter(userData -> userData.getBestTime() != -1)
                 .sorted(Comparator.comparingLong(UserData::getBestTime))
                 .limit(Setting.LEADERBOARD_MAX_SIZE.getInt() == -1 ? levelData.size() : Setting.LEADERBOARD_MAX_SIZE.getInt()) // If the max size is -1, show all players
@@ -616,8 +619,9 @@ public class ParkourManager extends Manager {
      * @param player The player
      * @param level  The level
      */
-    public @Nullable RunSession startRun(@NotNull Player player, @NotNull Level level) {
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+    @Nullable
+    public RunSession startRun(@NotNull Player player, @NotNull Level level) {
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         // Check if the player is already playing a level, if so cancel the run
         if (this.isPlaying(player.getUniqueId())) {
@@ -640,8 +644,8 @@ public class ParkourManager extends Manager {
         }
 
         // current data for the player in the level
-        var levelData = this.getUser(player.getUniqueId(), level.getId());
-        final var plc = StringPlaceholders.builder()
+        UserData levelData = this.getUser(player.getUniqueId(), level.getId());
+        final StringPlaceholders plc = StringPlaceholders.builder()
                 .addPlaceholder("level", level.getId())
                 .addPlaceholder("attempts", levelData.getAttempts())
                 .addPlaceholder("completions", levelData.getCompletions())
@@ -675,7 +679,7 @@ public class ParkourManager extends Manager {
         // Create a new parkour session
         RunSession parkourRun = new RunSession(player.getUniqueId(), level);
 
-        var event = new PlayerStartLevelEvent(player, level, parkourRun);
+        PlayerStartLevelEvent event = new PlayerStartLevelEvent(player, level, parkourRun);
         this.rosePlugin.getServer().getPluginManager().callEvent(event);
 
         if (event.isCancelled()) {
@@ -693,9 +697,9 @@ public class ParkourManager extends Manager {
      * @param player The player
      */
     public void finishRun(@NotNull Player player) {
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
-        var finishTime = System.currentTimeMillis(); // We're declaring it here, so we can get the most accurate time
-        var level = this.getPlayingLevel(player.getUniqueId());
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
+        long  finishTime = System.currentTimeMillis(); // We're declaring it here, so we can get the most accurate time
+        Level level = this.getPlayingLevel(player.getUniqueId());
         // Player is not playing a level
         if (level == null) {
             return;
@@ -710,10 +714,10 @@ public class ParkourManager extends Manager {
             return;
         }
 
-        var parkourRun = this.activeRunners.get(player.getUniqueId());
+        RunSession parkourRun = this.activeRunners.get(player.getUniqueId());
         parkourRun.setEndTime(finishTime);
 
-        var event = new PlayerFinishLevelEvent(player, level, parkourRun);
+        PlayerFinishLevelEvent event = new PlayerFinishLevelEvent(player, level, parkourRun);
         this.rosePlugin.getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) {
             return;
@@ -721,17 +725,17 @@ public class ParkourManager extends Manager {
 
         this.activeRunners.remove(player.getUniqueId()); // Remove the player from the active runners
 
-        var data = this.getUser(player.getUniqueId(), level.getId());
+        UserData data = this.getUser(player.getUniqueId(), level.getId());
         if (level.getTeleport() != null)
             this.teleport(player, level.getTeleport());
 
         // Check if the player has finished the level before the cooldown ends
         if (System.currentTimeMillis() - data.getLastCompletion() > level.getCooldown()) {
-            var plc = StringPlaceholders.single("cooldown", PluginUtils.parseFromTime(System.currentTimeMillis() - level.getCooldown()));
+            StringPlaceholders plc = StringPlaceholders.single("cooldown", PluginUtils.parseFromTime(System.currentTimeMillis() - level.getCooldown()));
             level.getCommands().forEach(command -> command.execute(player, plc));
         }
 
-        var completionTime = (parkourRun.getEndTime() - parkourRun.getStartTime());
+        long completionTime = (parkourRun.getEndTime() - parkourRun.getStartTime());
 
         // Update the player's data
         data.setName(player.getName());
@@ -741,7 +745,7 @@ public class ParkourManager extends Manager {
         data.setCompletions(data.getCompletions() + 1);
         data.getTotalTimes().add(data.getLastTime());
 
-        final var plc = StringPlaceholders.builder()
+        final StringPlaceholders plc = StringPlaceholders.builder()
                 .addPlaceholder("level", level.getId())
                 .addPlaceholder("time", formatter.format(new Date(completionTime)))
                 .addPlaceholder("completion", data.getCompletions())
@@ -782,7 +786,7 @@ public class ParkourManager extends Manager {
     public void cancelRun(@NotNull Player player, boolean teleport) {
 
         // Player is not playing a level
-        var run = this.activeRunners.get(player.getUniqueId());
+        RunSession run = this.activeRunners.get(player.getUniqueId());
         if (run == null) {
             return;
         }
@@ -802,25 +806,22 @@ public class ParkourManager extends Manager {
      */
     public void failRun(@NotNull Player player, boolean teleport) {
         // Player is not playing a level
-        var level = this.getPlayingLevel(player.getUniqueId());
-        var session = this.getRunSession(player.getUniqueId());
+        Level level = this.getPlayingLevel(player.getUniqueId());
+        RunSession session = this.getRunSession(player.getUniqueId());
         // Player is not playing a level
         if (level == null) {
             return;
         }
 
         // Teleport the player back to the checkpoint if they have one
-        var checkpoint = session.getCheckpoint();
+        Map.Entry<Integer, Location> checkpoint = session.getCheckpoint();
         if (level.getCheckpoints().size() > 0 && checkpoint != null) {
             this.teleport(player, PluginUtils.asCenterLoc(checkpoint.getValue()));
             return;
         }
 
         // Update the player's data
-        var data = this.getUser(player.getUniqueId(), level.getId());
-        if (data == null)
-            data = new UserData(player.getUniqueId(), level.getId());
-
+        UserData data = this.getUser(player.getUniqueId(), level.getId());
         data.setAttempts(data.getAttempts() + 1);
 
         // Send fail message here
@@ -850,6 +851,7 @@ public class ParkourManager extends Manager {
      * @param player The player
      * @return The player's parkour run
      */
+    @Nullable
     public RunSession getRunSession(@NotNull Player player) {
         return this.activeRunners.get(player.getUniqueId());
     }
@@ -860,6 +862,7 @@ public class ParkourManager extends Manager {
      * @param uuid The player's UUID
      * @return The player's parkour run
      */
+    @Nullable
     public RunSession getRunSession(@NotNull UUID uuid) {
         return this.activeRunners.get(uuid);
     }
@@ -880,7 +883,7 @@ public class ParkourManager extends Manager {
      * @return The player's parkour run
      */
     public boolean endRunSession(@NotNull Player player) {
-        var session = this.getRunSession(player);
+        RunSession session = this.getRunSession(player);
         if (session == null)
             return false;
 
@@ -909,7 +912,7 @@ public class ParkourManager extends Manager {
      * @param player The player
      */
     public void stopEditing(@NotNull Player player) {
-        var session = this.levelEditors.get(player.getUniqueId());
+        EditSession session = this.levelEditors.get(player.getUniqueId());
         if (session == null)
             return;
 
@@ -923,6 +926,7 @@ public class ParkourManager extends Manager {
      * @param player The player
      * @return The player's edit session
      */
+    @Nullable
     public EditSession getEditSession(@NotNull Player player) {
         return this.levelEditors.get(player.getUniqueId());
     }
@@ -933,6 +937,7 @@ public class ParkourManager extends Manager {
      * @param uuid The player's UUID
      * @return The player's edit session
      */
+    @Nullable
     public EditSession getEditSession(@NotNull UUID uuid) {
         return this.levelEditors.get(uuid);
     }
@@ -943,12 +948,12 @@ public class ParkourManager extends Manager {
      * @param player The player
      */
     public void saveEditSession(@NotNull Player player) {
-        var session = this.levelEditors.get(player.getUniqueId());
+        EditSession session = this.levelEditors.get(player.getUniqueId());
         if (session == null)
             return;
 
-        var sessionLevel = session.getLevel();
-        var cacheLevel = this.getLevel(sessionLevel.getId());
+        Level sessionLevel = session.getLevel();
+        Level cacheLevel = this.getLevel(sessionLevel.getId());
         if (cacheLevel == null)
             return;
 
@@ -972,11 +977,11 @@ public class ParkourManager extends Manager {
      */
     public Map<UUID, UserData> getUsersInLevel(Level level) {
         Map<UUID, UserData> users = new HashMap<>();
-        for (var user : this.activeRunners.values()) {
+        for (RunSession user : this.activeRunners.values()) {
             if (!user.getLevel().getId().equals(level.getId()))
                 return users;
 
-            var data = this.getUser(user.getPlayer(), level.getId());
+            UserData data = this.getUser(user.getPlayer(), level.getId());
             users.put(user.getPlayer(), data);
         }
 
@@ -988,9 +993,9 @@ public class ParkourManager extends Manager {
      *
      * @param player The player
      */
-    public void checkUserName(OfflinePlayer player) {
-        var dataMap = new HashMap<>(this.getUser(player.getUniqueId()));
-        for (var data : dataMap.values()) {
+    public void checkUserName(@NotNull OfflinePlayer player) {
+        Map<String, UserData> dataMap = new HashMap<>(this.getUser(player.getUniqueId()));
+        for (UserData data : dataMap.values()) {
             if (data.checkUser(player))
                 this.saveUserData(data);
         }

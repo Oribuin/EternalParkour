@@ -19,8 +19,7 @@ public class DelStartCommand extends RoseSubCommand {
 
     @RoseExecutable
     public void execute(@Inject CommandContext context, Level level) {
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         level.setStartRegion(null);
         locale.sendMessage(context.getSender(), "command-edit-del-start-success", StringPlaceholders.single("name", level.getId()));

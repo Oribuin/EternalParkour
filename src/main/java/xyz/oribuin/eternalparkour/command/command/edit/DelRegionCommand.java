@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
+import xyz.oribuin.eternalparkour.parkour.Region;
 
 public class DelRegionCommand extends RoseSubCommand {
 
@@ -20,11 +21,10 @@ public class DelRegionCommand extends RoseSubCommand {
 
     @RoseExecutable
     public void execute(@Inject CommandContext context, Level level) {
-        var player = (Player) context.getSender();
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        Player player = (Player) context.getSender();
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
-        var region = level.getRegionAt(player.getLocation());
+        Region region = level.getRegionAt(player.getLocation());
         if (region == null || !level.isParkourRegion(region)) {
             locale.sendMessage(player, "region-not-found");
             return;

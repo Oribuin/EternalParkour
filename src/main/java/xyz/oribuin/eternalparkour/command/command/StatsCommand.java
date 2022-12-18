@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
+import xyz.oribuin.eternalparkour.parkour.UserData;
 import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 public class StatsCommand extends RoseCommand {
@@ -22,8 +23,8 @@ public class StatsCommand extends RoseCommand {
 
     @RoseExecutable
     public void execute(CommandContext context, Level level, @Optional OfflinePlayer player) {
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         if (!(context.getSender() instanceof Player) && player == null) {
             locale.sendMessage(context.getSender(), "command-argument-player");
@@ -31,10 +32,10 @@ public class StatsCommand extends RoseCommand {
         }
 
         this.rosePlugin.getServer().getScheduler().runTaskAsynchronously(this.rosePlugin, () -> {
-            var offlinePlayer = player == null ? (OfflinePlayer) context.getSender() : player;
-            var data = manager.getUser(offlinePlayer.getUniqueId(), level.getId());
+            OfflinePlayer offlinePlayer = player == null ? (OfflinePlayer) context.getSender() : player;
+            UserData data = manager.getUser(offlinePlayer.getUniqueId(), level.getId());
 
-            var placeholders = StringPlaceholders.builder("player", offlinePlayer.getName())
+            StringPlaceholders placeholders = StringPlaceholders.builder("player", offlinePlayer.getName())
                     .addPlaceholder("level", level.getId())
                     .addPlaceholder("time", PluginUtils.parseToScore(data.getBestTime()))
                     .addPlaceholder("attempts", data.getAttempts())

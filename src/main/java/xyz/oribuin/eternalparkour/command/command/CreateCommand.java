@@ -19,9 +19,9 @@ public class CreateCommand extends RoseCommand {
 
     @RoseExecutable
     public void execute(CommandContext context, String name) {
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
-        var player = (Player) context.getSender();
+        Player player = (Player) context.getSender();
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         if (manager.getLevel(name) != null) {
             locale.sendMessage(player, "command-create-already-exists");

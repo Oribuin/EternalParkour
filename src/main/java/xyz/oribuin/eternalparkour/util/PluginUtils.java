@@ -109,7 +109,7 @@ public final class PluginUtils {
 
     public static @NotNull Color getColor(String hex) {
         try {
-            var javaColor = java.awt.Color.decode(hex);
+            java.awt.Color javaColor = java.awt.Color.decode(hex);
             return Color.fromRGB(javaColor.getRed(), javaColor.getGreen(), javaColor.getBlue());
         } catch (IllegalArgumentException e) {
             return Color.BLACK;

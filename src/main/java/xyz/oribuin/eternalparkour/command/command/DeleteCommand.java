@@ -6,6 +6,7 @@ import dev.rosewood.rosegarden.command.framework.RoseCommand;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
+import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Level;
@@ -18,8 +19,8 @@ public class DeleteCommand extends RoseCommand {
 
     @RoseExecutable
     public void execute(CommandContext context, Level level) {
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         manager.deleteLevel(level);
         locale.sendMessage(context.getSender(), "command-delete-success", StringPlaceholders.single("name", level.getId()));

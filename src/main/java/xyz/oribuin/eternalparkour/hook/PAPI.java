@@ -54,7 +54,7 @@ public class PAPI extends PlaceholderExpansion {
         }
 
         // All of these placeholders require a level argument
-        var args = params.split("_");
+        String[] args = params.split("_");
         if (args.length < 2)
             return null;
 
@@ -91,7 +91,7 @@ public class PAPI extends PlaceholderExpansion {
             };
         }
 
-        var function = this.levelPlaceholders.get(level).get(args[0]);
+        Function<OfflinePlayer, String> function = this.levelPlaceholders.get(level).get(args[0]);
         if (function == null)
             return null;
 

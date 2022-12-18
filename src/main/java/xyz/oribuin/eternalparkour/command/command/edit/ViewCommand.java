@@ -21,9 +21,9 @@ public class ViewCommand extends RoseSubCommand {
 
     @RoseExecutable
     public void execute(@Inject CommandContext context, Level level) {
-        var player = (Player) context.getSender();
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        Player player = (Player) context.getSender();
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         manager.startEditing(player, level, EditType.VIEWING);
         locale.sendMessage(player, "command-edit-view-success", StringPlaceholders.single("name", level.getId()));

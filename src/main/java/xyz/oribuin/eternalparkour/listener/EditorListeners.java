@@ -3,6 +3,7 @@ package xyz.oribuin.eternalparkour.listener;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,6 +13,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
@@ -32,9 +34,9 @@ public class EditorListeners implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        var player = event.getPlayer();
-        var block = event.getClickedBlock();
-        var action = event.getAction();
+        Player player = event.getPlayer();
+        Block block = event.getClickedBlock();
+        Action action = event.getAction();
 
         if (event.getHand() != EquipmentSlot.HAND)
             return;
@@ -42,7 +44,7 @@ public class EditorListeners implements Listener {
         if (block == null)
             return;
 
-        var editSession = this.manager.getLevelEditors().get(player.getUniqueId());
+        EditSession editSession = this.manager.getLevelEditors().get(player.getUniqueId());
         if (editSession == null || editSession.getType() == EditType.VIEWING)
             return;
 
@@ -68,10 +70,10 @@ public class EditorListeners implements Listener {
      * @param action  The action the player performed
      */
     private void editRegion(Player player, EditSession session, Block block, Action action) {
-        var current = session.getRegion() == null ? new Region() : session.getRegion();
-        var particle = new ParticleData(Particle.REDSTONE);
-        var location = block.getLocation().clone();
-        var particleLocations = this.getCube(location, location.clone().add(1, 1, 1), 0.5);
+        Region  current = session.getRegion() == null ? new Region() : session.getRegion();
+        ParticleData particle = new ParticleData(Particle.REDSTONE);
+        Location location = block.getLocation().clone();
+        List<Location> particleLocations = this.getCube(location, location.clone().add(1, 1, 1), 0.5);
 
         if (action == Action.LEFT_CLICK_BLOCK) {
             current.setPos1(location);
@@ -114,17 +116,17 @@ public class EditorListeners implements Listener {
      * @param block   The block the player clicked
      */
     private void editCheckpoint(Player player, EditSession session, Block block) {
-        var level = session.getLevel();
-        var checkpoints = level.getCheckpoints();
+        Level level = session.getLevel();
+        Map<Integer, Location> checkpoints = level.getCheckpoints();
 
         // Get checkpoint from the block
-        var checkpoint = checkpoints.entrySet().stream()
+        Map.Entry<Integer, Location> checkpoint = checkpoints.entrySet().stream()
                 .filter(entry -> entry.getValue().equals(block.getLocation()))
                 .findFirst()
                 .orElse(null);
 
-        var particleLocations = this.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
-        var particle = new ParticleData(Particle.REDSTONE);
+        List<Location> particleLocations = this.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
+        ParticleData particle = new ParticleData(Particle.REDSTONE);
 
         // Add a new checkpoint
         if (checkpoint == null) {
@@ -142,14 +144,13 @@ public class EditorListeners implements Listener {
         checkpoints.remove(checkpoint.getKey());
 
         // Reorder the checkpoints
-        var newCheckpoints = new HashMap<Integer, Location>();
-        var i = 1;
+        Map<Integer, Location> newCheckpoints = new HashMap<>();
+        int i = 1;
         for (Map.Entry<Integer, Location> entry : checkpoints.entrySet()) {
             newCheckpoints.put(i++, entry.getValue());
         }
 
-        particle.setDustColor(Color.RED)
-                .cacheParticleData();
+        particle.setDustColor(Color.RED).cacheParticleData();
 
         particleLocations.forEach(location -> particle.spawn(player, location, 1));
         level.setCheckpoints(newCheckpoints);
@@ -168,13 +169,13 @@ public class EditorListeners implements Listener {
      */
     private List<Location> getCube(Location corner1, Location corner2, double particleDistance) {
         List<Location> result = new ArrayList<>();
-        var world = corner1.getWorld();
-        var minX = Math.min(corner1.getX(), corner2.getX());
-        var minY = Math.min(corner1.getY(), corner2.getY());
-        var minZ = Math.min(corner1.getZ(), corner2.getZ());
-        var maxX = Math.max(corner1.getX(), corner2.getX());
-        var maxY = Math.max(corner1.getY(), corner2.getY());
-        var maxZ = Math.max(corner1.getZ(), corner2.getZ());
+        World world = corner1.getWorld();
+        double minX = Math.min(corner1.getX(), corner2.getX());
+        double minY = Math.min(corner1.getY(), corner2.getY());
+        double minZ = Math.min(corner1.getZ(), corner2.getZ());
+        double maxX = Math.max(corner1.getX(), corner2.getX());
+        double maxY = Math.max(corner1.getY(), corner2.getY());
+        double maxZ = Math.max(corner1.getZ(), corner2.getZ());
 
         for (double x = minX; x <= maxX; x += particleDistance) {
             result.add(new Location(world, x, minY, minZ));

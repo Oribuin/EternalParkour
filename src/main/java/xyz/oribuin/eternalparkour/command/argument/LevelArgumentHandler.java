@@ -18,9 +18,9 @@ public class LevelArgumentHandler extends RoseCommandArgumentHandler<Level> {
 
     @Override
     protected Level handleInternal(RoseCommandArgumentInfo argumentInfo, ArgumentParser argumentParser) throws HandledArgumentException {
-        var input = argumentParser.next();
+        String input = argumentParser.next();
 
-        var level = this.rosePlugin.getManager(ParkourManager.class).getLevel(input);
+        Level level = this.rosePlugin.getManager(ParkourManager.class).getLevel(input);
         if (level == null)
             throw new HandledArgumentException("argument-handler-level", StringPlaceholders.single("level", input));
 

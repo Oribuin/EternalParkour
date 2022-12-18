@@ -24,8 +24,8 @@ public class ResetUserCommand extends RoseSubCommand {
 
     @RoseExecutable
     public void execute(@Inject CommandContext context, OfflinePlayer player, @Optional Level level) {
-        var manager = this.rosePlugin.getManager(ParkourManager.class);
-        var locale = this.rosePlugin.getManager(LocaleManager.class);
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         if (level == null) {
             manager.deleteUser(player.getUniqueId());

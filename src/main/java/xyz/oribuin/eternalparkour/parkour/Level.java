@@ -51,14 +51,14 @@ public class Level {
      * @return The region at the location.
      */
     public @Nullable Region getRegionAt(@NotNull Location location) {
-        var allRegions = new ArrayList<>(this.levelRegions);
+        List<Region> allRegions = new ArrayList<>(this.levelRegions);
         if (this.startRegion != null)
             allRegions.add(this.startRegion);
 
         if (this.finishRegion != null)
             allRegions.add(this.finishRegion);
 
-        for (var region : allRegions) {
+        for (Region region : allRegions) {
             if (region.isInside(location))
                 return region;
         }
@@ -102,9 +102,10 @@ public class Level {
      * @param location The location to check.
      * @return The checkpoint id
      */
+    @Nullable
     public Map.Entry<Integer, Location> getCheckpoint(@NotNull Location location) {
         // check if location is inside a checkpoint
-        for (var entry : this.checkpoints.entrySet()) {
+        for (Map.Entry<Integer, Location> entry : this.checkpoints.entrySet()) {
             if (entry.getValue().distance(location) < 1)
                 return entry;
         }
@@ -119,7 +120,7 @@ public class Level {
      * @return The position of the user
      */
     public int getLeaderboardPosition(@NotNull UUID uuid) {
-        for (var entry : this.topUsers.entrySet()) {
+        for (Map.Entry<Integer, UserData> entry : this.topUsers.entrySet()) {
             if (entry.getValue().getPlayer().equals(uuid))
                 return entry.getKey();
         }
@@ -133,8 +134,9 @@ public class Level {
      * @param uuid The uuid of the user
      * @return The user's data
      */
+    @Nullable
     public UserData getLeaderboardData(@NotNull UUID uuid) {
-        for (var entry : this.topUsers.entrySet()) {
+        for (Map.Entry<Integer, UserData> entry : this.topUsers.entrySet()) {
             if (entry.getValue().getPlayer().equals(uuid))
                 return entry.getValue();
         }
@@ -148,6 +150,7 @@ public class Level {
      * @param position The position of the user
      * @return The user's data
      */
+    @Nullable
     public UserData getLeaderboardData(int position) {
         return this.topUsers.get(position);
     }

@@ -3,15 +3,20 @@ package xyz.oribuin.eternalparkour.task;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Region;
+import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * This is the task that will display the time for the player in the action bar.
@@ -34,20 +39,19 @@ public class EditorTimer extends BukkitRunnable {
         this.finishParticle = new ParticleData(Particle.REDSTONE).setDustColor(Setting.EDITOR_TASK_FINISH_COLOR.getColor());
         this.levelParticle = new ParticleData(Particle.REDSTONE).setDustColor(Setting.EDITOR_TASK_LEVEL_COLOR.getColor());
         this.checkpointParticle = new ParticleData(Particle.REDSTONE).setDustColor(Setting.EDITOR_TASK_CHECKPOINT_COLOR.getColor());
-
     }
 
     @Override
     public void run() {
-        for (var entry : this.manager.getLevelEditors().entrySet()) {
-            var player = Bukkit.getPlayer(entry.getKey());
+        for (Map.Entry<UUID, EditSession> entry : this.manager.getLevelEditors().entrySet()) {
+            Player player = Bukkit.getPlayer(entry.getKey());
 
-            var spawnRegion = entry.getValue().getLevel().getStartRegion();
+            Region spawnRegion = entry.getValue().getLevel().getStartRegion();
             if (spawnRegion != null) {
                 this.getCube(spawnRegion).forEach(location -> startParticle.spawn(player, location, 1));
             }
 
-            var endRegion = entry.getValue().getLevel().getFinishRegion();
+            Region endRegion = entry.getValue().getLevel().getFinishRegion();
             if (endRegion != null) {
                 this.getCube(endRegion).forEach(location -> finishParticle.spawn(player, location, 1));
             }
@@ -57,8 +61,8 @@ public class EditorTimer extends BukkitRunnable {
 
             // All checkpoints
             entry.getValue().getLevel().getCheckpoints().forEach((id, loc) -> {
-                var corner1 = loc.clone().add(1, 2, 1);
-                var corner2 = loc.clone();
+                Location corner1 = loc.clone().add(1, 2, 1);
+                Location corner2 = loc.clone();
 
                 this.getCube(corner1, corner2, 0).forEach(location -> checkpointParticle.spawn(player, location, 1));
             });
@@ -88,13 +92,13 @@ public class EditorTimer extends BukkitRunnable {
      */
     private List<Location> getCube(Location corner1, Location corner2, double outerAdjustment) {
         List<Location> result = new ArrayList<>();
-        var world = corner1.getWorld();
-        var minX = Math.min(corner1.getX(), corner2.getX());
-        var minY = Math.min(corner1.getY(), corner2.getY());
-        var minZ = Math.min(corner1.getZ(), corner2.getZ());
-        var maxX = Math.max(corner1.getX(), corner2.getX()) + outerAdjustment;
-        var maxY = Math.max(corner1.getY(), corner2.getY()) + outerAdjustment;
-        var maxZ = Math.max(corner1.getZ(), corner2.getZ()) + outerAdjustment;
+        World world = corner1.getWorld();
+        double minX = Math.min(corner1.getX(), corner2.getX());
+        double minY = Math.min(corner1.getY(), corner2.getY());
+        double minZ = Math.min(corner1.getZ(), corner2.getZ());
+        double maxX = Math.max(corner1.getX(), corner2.getX()) + outerAdjustment;
+        double maxY = Math.max(corner1.getY(), corner2.getY()) + outerAdjustment;
+        double maxZ = Math.max(corner1.getZ(), corner2.getZ()) + outerAdjustment;
 
         for (double x = minX; x <= maxX; x += 0.5) {
             result.add(new Location(world, x, minY, minZ));

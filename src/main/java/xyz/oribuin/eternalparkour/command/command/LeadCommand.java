@@ -8,6 +8,8 @@ import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
@@ -27,14 +29,14 @@ public class LeadCommand extends RoseCommand {
 
     @RoseExecutable
     public void execute(CommandContext context, Level level, @Optional Integer page) {
-        final var manager = this.rosePlugin.getManager(ParkourManager.class);
-        final var locale = this.rosePlugin.getManager(LocaleManager.class);
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         // We get the top players for the level, this is done asynchronously.
         this.rosePlugin.getServer().getScheduler().runTaskAsynchronously(this.rosePlugin, () -> {
-            var newLevel = manager.calculateLevel(level);
+            Level newLevel = manager.calculateLevel(level);
 
-            final var placeholders = StringPlaceholders.builder()
+            final StringPlaceholders.Builder placeholders = StringPlaceholders.builder()
                     .addPlaceholder("level", newLevel.getId())
                     .addPlaceholder("average", newLevel.getAverageTime());
 
@@ -43,7 +45,7 @@ public class LeadCommand extends RoseCommand {
             Map<Integer, UserData> topPlayers = this.splitMap(newLevel.getTopUsers(), page == null ? 1 : page, Setting.LEADERBOARD_PLAYERS_PER_PAGE.getInt());
 
             topPlayers.forEach((integer, data) -> {
-                var player = Bukkit.getOfflinePlayer(data.getPlayer());
+                OfflinePlayer player = Bukkit.getOfflinePlayer(data.getPlayer());
 
                 placeholders.addPlaceholder("rank", integer)
                         .addPlaceholder("player", player.getName())

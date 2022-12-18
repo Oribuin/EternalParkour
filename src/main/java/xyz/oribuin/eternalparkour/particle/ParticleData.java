@@ -4,6 +4,7 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -57,7 +58,7 @@ public class ParticleData {
 
     public void spawn(@Nullable Player player, Location loc, int count, double offsetX, double offsetY, double offsetZ) {
 
-        final var world = loc.getWorld();
+        final World world = loc.getWorld();
         if (world == null)
             return;
 

@@ -13,6 +13,8 @@ import xyz.oribuin.eternalparkour.database.migration._1_CreateInitialTables;
 import xyz.oribuin.eternalparkour.parkour.UserData;
 import xyz.oribuin.eternalparkour.util.TimesCompleted;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,7 +36,8 @@ public class DataManager extends AbstractDataManager {
      * @param level The level name to get the data for
      * @return A list of all the user data for the level
      */
-    public @NotNull List<UserData> getLevelData(@NotNull String level) {
+    @NotNull
+    public List<UserData> getLevelData(@NotNull String level) {
         return this.userData.values().stream()
                 .filter(data -> data.getLevel().equals(level))
                 .toList();
@@ -63,7 +66,7 @@ public class DataManager extends AbstractDataManager {
             return;
 
         this.async(task -> this.databaseConnector.connect(connection -> {
-            for (var entry : this.userData.values()) {
+            for (UserData entry : this.userData.values()) {
                 final String update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
                         "player, " +
                         "`level`, " +
@@ -77,7 +80,7 @@ public class DataManager extends AbstractDataManager {
                         "totalTimes) " +
                         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-                try (var statement = connection.prepareStatement(update)) {
+                try (PreparedStatement statement = connection.prepareStatement(update)) {
                     statement.setString(1, entry.getPlayer().toString());
                     statement.setString(2, entry.getLevel().toLowerCase());
                     statement.setString(3, entry.getName());
@@ -116,7 +119,7 @@ public class DataManager extends AbstractDataManager {
                     "totalTimes) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            try (var statement = connection.prepareStatement(update)) {
+            try (PreparedStatement statement = connection.prepareStatement(update)) {
                 statement.setString(1, data.getPlayer().toString());
                 statement.setString(2, data.getLevel().toLowerCase());
                 statement.setString(3, data.getName());
@@ -142,7 +145,7 @@ public class DataManager extends AbstractDataManager {
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ? AND level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
-            try (var statement = connection.prepareStatement(delete)) {
+            try (PreparedStatement statement = connection.prepareStatement(delete)) {
                 statement.setString(1, data.getPlayer().toString());
                 statement.setString(2, data.getLevel().toLowerCase());
                 statement.executeUpdate();
@@ -160,7 +163,7 @@ public class DataManager extends AbstractDataManager {
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
-            try (var statement = connection.prepareStatement(delete)) {
+            try (PreparedStatement statement = connection.prepareStatement(delete)) {
                 statement.setString(1, player.toString());
                 statement.executeUpdate();
             }
@@ -177,7 +180,7 @@ public class DataManager extends AbstractDataManager {
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
-            try (var statement = connection.prepareStatement(delete)) {
+            try (PreparedStatement statement = connection.prepareStatement(delete)) {
                 statement.setString(1, level.toLowerCase());
                 statement.executeUpdate();
             }
@@ -218,13 +221,13 @@ public class DataManager extends AbstractDataManager {
         this.userData.clear();
 
         this.async(task -> this.databaseConnector.connect(connection -> {
-            final var select = "SELECT * FROM " + this.getTablePrefix() + "data";
+            final String select = "SELECT * FROM " + this.getTablePrefix() + "data";
 
-            try (var statement = connection.prepareStatement(select)) {
-                var results = statement.executeQuery();
+            try (PreparedStatement statement = connection.prepareStatement(select)) {
+                ResultSet results = statement.executeQuery();
                 while (results.next()) {
-                    var uuid = UUID.fromString(results.getString("player"));
-                    var data = new UserData(uuid, results.getString("level").toLowerCase());
+                    UUID uuid = UUID.fromString(results.getString("player"));
+                    UserData data = new UserData(uuid, results.getString("level").toLowerCase());
                     data.setName(results.getString("username"));
                     data.setCompletions(results.getInt("completed"));
                     data.setAttempts(results.getInt("attempts"));
