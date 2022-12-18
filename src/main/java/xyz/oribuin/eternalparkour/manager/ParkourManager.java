@@ -346,20 +346,10 @@ public class ParkourManager extends Manager {
         this.levelConfig.save();
 
         // Delete all active editor sessions for this level
-        var levelEditors = new HashMap<>(this.levelEditors);
-        levelEditors.forEach((player, editor) -> {
-            if (editor.getLevel().equals(level)) {
-                this.levelEditors.remove(player);
-            }
-        });
+        this.levelEditors.entrySet().removeIf(entry -> entry.getValue().getLevel().equals(level));
 
         // Delete all active player sessions for this level
-        var activeRunners = new HashMap<>(this.activeRunners);
-        activeRunners.forEach((player, runner) -> {
-            if (runner.getLevel().equals(level)) {
-                this.activeRunners.remove(player);
-            }
-        });
+        this.activeRunners.entrySet().removeIf(entry -> entry.getValue().getLevel().equals(level));
 
         // Delete all the level data from the database
         this.dataManager.deleteLevel(level.getId());

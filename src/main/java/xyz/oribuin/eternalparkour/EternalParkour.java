@@ -17,7 +17,6 @@ import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.task.EditorTimer;
 import xyz.oribuin.eternalparkour.task.LeaderboardTimer;
 import xyz.oribuin.eternalparkour.task.RunnerTimer;
-import xyz.oribuin.eternalparkour.util.EventWaiter;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.List;
 public class EternalParkour extends RosePlugin {
 
     private static EternalParkour instance;
-    private static EventWaiter eventWaiter;
 
     public EternalParkour() {
         super(-1, 16982, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
@@ -34,14 +32,6 @@ public class EternalParkour extends RosePlugin {
 
     @Override
     protected void enable() {
-
-        // Make sure the server is using 1.16+
-        if (NMSUtil.getVersionNumber() < 16) {
-            this.getLogger().severe("You cannot use EternalParkour on 1." + NMSUtil.getVersionNumber() + ", We are limited to 1.16.5+");
-            this.getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-
         // Register Listeners
         this.getServer().getPluginManager().registerEvents(new EditorListeners(this), this);
         this.getServer().getPluginManager().registerEvents(new PlayerListeners(this), this);
@@ -49,9 +39,6 @@ public class EternalParkour extends RosePlugin {
 
         // Register PlaceholderAPI
         new PAPI(this);
-
-        // Register Event Waiter
-        eventWaiter = new EventWaiter();
     }
 
     @Override
@@ -82,10 +69,6 @@ public class EternalParkour extends RosePlugin {
 
     public static EternalParkour getInstance() {
         return instance;
-    }
-
-    public static EventWaiter getEventWaiter() {
-        return eventWaiter;
     }
 
 }

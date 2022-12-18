@@ -2,7 +2,7 @@ name: EternalParkour
 author: Oribuin
 version: '@version@'
 main: xyz.oribuin.eternalparkour.EternalParkour
-api-version: '1.13'
+api-version: '1.16'
 description: A parkour plugin times, checkpoints, leaderboards and more.
 softdepend:
   - PlaceholderAPI
