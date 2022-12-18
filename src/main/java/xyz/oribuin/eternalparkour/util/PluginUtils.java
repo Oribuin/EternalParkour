@@ -89,6 +89,13 @@ public final class PluginUtils {
         return new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
+    public static @Nullable Location asCenterLoc(@Nullable Location location, float yaw, float pitch) {
+        if (location == null)
+            return null;
+
+        return new Location(location.getWorld(), location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5, yaw, pitch);
+    }
+
     public static @Nullable Location asCenterLoc(@Nullable Location location) {
         if (location == null)
             return null;

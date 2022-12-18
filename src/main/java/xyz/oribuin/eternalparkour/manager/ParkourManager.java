@@ -814,10 +814,12 @@ public class ParkourManager extends Manager {
         }
 
         // Teleport the player back to the checkpoint if they have one
-        Map.Entry<Integer, Location> checkpoint = session.getCheckpoint();
-        if (level.getCheckpoints().size() > 0 && checkpoint != null) {
-            this.teleport(player, PluginUtils.asCenterLoc(checkpoint.getValue()));
-            return;
+        if (session != null && session.getCheckpoint() != null) {
+            Map.Entry<Integer, Location> checkpoint = session.getCheckpoint();
+            if (level.getCheckpoints().size() > 0 && checkpoint != null) {
+                this.teleport(player, PluginUtils.asCenterLoc(checkpoint.getValue(), player.getLocation().getYaw(), player.getLocation().getPitch()));
+                return;
+            }
         }
 
         // Update the player's data
