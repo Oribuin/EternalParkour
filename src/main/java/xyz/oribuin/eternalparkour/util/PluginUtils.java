@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Date;
 
 public final class PluginUtils {
@@ -34,34 +35,7 @@ public final class PluginUtils {
      * @return The parsed time
      */
     public static long parseToTime(String time) {
-        String[] parts = time.split(" ");
-        long totalSeconds = 0;
-
-        for (String part : parts) {
-
-            // get the last character
-            char lastChar = part.charAt(part.length() - 1);
-            String num = part.substring(0, part.length() - 1);
-            if (num.isEmpty())
-                continue;
-
-            int amount;
-            try {
-                amount = Integer.parseInt(num);
-            } catch (NumberFormatException e) {
-                continue;
-            }
-
-            switch (lastChar) {
-                case 'w' -> totalSeconds += amount * 604800L;
-                case 'd' -> totalSeconds += amount * 86400L;
-                case 'h' -> totalSeconds += amount * 3600L;
-                case 'm' -> totalSeconds += amount * 60L;
-                case 's' -> totalSeconds += amount;
-            }
-        }
-
-        return totalSeconds * 1000;
+        return Duration.parse(time).toMillis();
     }
 
     /**
@@ -71,44 +45,7 @@ public final class PluginUtils {
      * @return The parsed time
      */
     public static String parseFromTime(long time) {
-        // Do the reverse of the above method
-        long totalSeconds = time / 1000;
-
-        if (totalSeconds <= 0)
-            return "";
-
-        long weeks = totalSeconds / 604800;
-        totalSeconds %= 604800;
-        long days = totalSeconds / 86400;
-        totalSeconds %= 86400;
-        long hours = totalSeconds / 3600;
-        totalSeconds %= 3600;
-        long minutes = totalSeconds / 60;
-        long seconds = totalSeconds % 60;
-        long miliseconds = (time % 1000) / 10;
-
-
-        final StringBuilder builder = new StringBuilder();
-
-        if (weeks > 0)
-            builder.append(weeks).append("w ");
-
-        if (days > 0)
-            builder.append(days).append("d ");
-
-        if (hours > 0)
-            builder.append(hours).append("h ");
-
-        if (minutes > 0)
-            builder.append(minutes).append("m ");
-
-        if (seconds > 0)
-            builder.append(seconds).append("s");
-
-        if (miliseconds > 0)
-            builder.append(miliseconds).append("ms");
-
-        return builder.toString();
+        return Duration.ofMillis(time).toString();
     }
 
 

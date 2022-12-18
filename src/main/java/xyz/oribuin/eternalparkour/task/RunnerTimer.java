@@ -61,6 +61,7 @@ public class RunnerTimer extends BukkitRunnable {
                 return;
             }
 
+            // Player#spigot is cringe, we should replace this with something else soon
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     TextComponent.fromLegacyText(HexUtils.colorify(
                             PAPI.apply(player, placeholders.apply(timerMessage))

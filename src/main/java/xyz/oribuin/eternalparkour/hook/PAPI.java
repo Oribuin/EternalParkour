@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+// TODO Clean up this class
 public class PAPI extends PlaceholderExpansion {
 
     private final EternalParkour plugin;

@@ -13,9 +13,11 @@ import xyz.oribuin.eternalparkour.manager.ConfigurationManager;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.DataManager;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
+import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.task.EditorTimer;
 import xyz.oribuin.eternalparkour.task.LeaderboardTimer;
 import xyz.oribuin.eternalparkour.task.RunnerTimer;
+import xyz.oribuin.eternalparkour.util.EventWaiter;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
 public class EternalParkour extends RosePlugin {
 
     private static EternalParkour instance;
+    private static EventWaiter eventWaiter;
 
     public EternalParkour() {
         super(-1, 16982, ConfigurationManager.class, DataManager.class, LocaleManager.class, CommandManager.class);
@@ -47,6 +50,8 @@ public class EternalParkour extends RosePlugin {
         // Register PlaceholderAPI
         new PAPI(this);
 
+        // Register Event Waiter
+        eventWaiter = new EventWaiter();
     }
 
     @Override
@@ -67,16 +72,20 @@ public class EternalParkour extends RosePlugin {
 
     @Override
     protected void disable() {
-
+        Bukkit.getScheduler().cancelTasks(this);
     }
 
     @Override
     protected List<Class<? extends Manager>> getManagerLoadPriority() {
-        return Collections.emptyList();
+        return List.of(ParkourManager.class);
     }
 
     public static EternalParkour getInstance() {
         return instance;
+    }
+
+    public static EventWaiter getEventWaiter() {
+        return eventWaiter;
     }
 
 }

@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+// TODO Add more @NotNull and @Nullable annotations
 public class DataManager extends AbstractDataManager {
 
     // UUID = Player's UUID, String = Parkour ID, UserData = Parkour Data
@@ -47,9 +48,7 @@ public class DataManager extends AbstractDataManager {
      * @param data The data to cache
      */
     public void cacheUser(UserData data) {
-        var mapData = this.userData.get(data.getPlayer());
-        if (mapData == null)
-            mapData = new HashMap<>();
+        var mapData = this.userData.getOrDefault(data.getPlayer(), new HashMap<>());
 
         mapData.put(data.getLevel(), data);
         this.userData.put(data.getPlayer(), mapData);
