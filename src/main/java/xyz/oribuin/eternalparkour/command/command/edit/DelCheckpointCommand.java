@@ -46,7 +46,10 @@ public class DelCheckpointCommand extends RoseSubCommand {
 
         level.getCheckpoints().remove(checkpoint.getId());
         level.reorganizeCheckpoints();
-        locale.sendMessage(player, "command-edit-del-checkpoint-success", StringPlaceholders.single("name", level.getId()));
+        locale.sendMessage(player, "command-edit-del-checkpoint-success", StringPlaceholders.builder("name", level.getId())
+                .addPlaceholder("order", checkpoint.getId())
+                .build()
+        );
     }
 
     @Override
