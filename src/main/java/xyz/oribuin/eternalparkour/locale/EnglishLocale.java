@@ -69,22 +69,25 @@ public class EnglishLocale implements Locale {
             this.put("#12", "Edit Command - Checkpoint Command");
             this.put("command-edit-checkpoints-start", "Now editing the checkpoint region of [#00B4DB%name%&f].");
 
-            this.put("#13", "Edit Command - Delete Finish Command");
+            this.put("#13", "Edit Command - Delete Checkpoint Command");
+            this.put("command-edit-del-checkpoint-success", "You have deleted the checkpoint [#00B4DB%order%&f] region of [#00B4DB%name%&f].");
+
+            this.put("#14", "Edit Command - Delete Finish Command");
             this.put("command-edit-del-finish-success", "You have deleted the finish region of [#00B4DB%name%&f].");
 
-            this.put("#14", "Edit Command - Delete Level Region Command");
+            this.put("#15", "Edit Command - Delete Level Region Command");
             this.put("command-edit-del-region-success", "You have deleted the level region of [#00B4DB%name%&f].");
 
-            this.put("#15", "Edit Command - Delete Start Command");
+            this.put("#16", "Edit Command - Delete Start Command");
             this.put("command-edit-del-start-success", "You have deleted the start region of [#00B4DB%name%&f].");
 
-            this.put("#16", "Edit Command - Teleport Location Command");
+            this.put("#17", "Edit Command - Teleport Location Command");
             this.put("command-edit-teleport-success", "You have successfully changed teleport location of [#00B4DB%name%&f] to [#00B4DB%location%&f].");
 
-            this.put("#17", "Edit Command - View Command");
+            this.put("#18", "Edit Command - View Command");
             this.put("command-edit-view-success", "Now viewing the level [#00B4DB%name%&f].");
 
-            this.put("#18", "Leaderboard Command");
+            this.put("#19", "Leaderboard Command");
             this.put("command-leaderboard-description", "Show the leaderboard for a level");
             this.put("command-leaderboard-header", "&f&lTop 10 Players for #00B4DB%level%");
             this.put("command-leaderboard-entry", List.of(
@@ -93,7 +96,7 @@ public class EnglishLocale implements Locale {
                     " "
             ));
 
-            this.put("19", "Stats Command");
+            this.put("20", "Stats Command");
             this.put("command-stats-description", "Show your stats for a level");
             this.put("command-stats-header", "&f&lStats for #00B4DB%level%");
             this.put("command-stats-body", List.of(
@@ -102,33 +105,36 @@ public class EnglishLocale implements Locale {
                     " "
             ));
 
-            this.put("#20", "Admin Command");
+            this.put("#21", "Admin Command");
             this.put("command-admin-description", "Moderate the user data.");
             this.put("command-admin-usage", "&cUsage: /pk admin <resetuser|resetlevel> <level> [player]");
 
-            this.put("#21", "Admin Command - Reset Level");
+            this.put("#22", "Admin Command - Reset Level");
             this.put("command-admin-resetlevel-description", "Reset all player data for a level.");
             this.put("command-admin-resetlevel-success", "You have reset all player data for [#00B4DB%level%&f].");
 
-            this.put("#22", "Admin Command - Reset User");
+            this.put("#23", "Admin Command - Reset User");
             this.put("command-admin-resetuser-description", "Reset a player's data for a level.");
             this.put("command-admin-resetuser-all", "You have reset all player data for [#00B4DB%player%&f].");
             this.put("command-admin-resetuser-level", "You have reset [#00B4DB%level%&f] data for [#00B4DB%player%&f].");
 
-            this.put("#23", "Restart Command");
+            this.put("#24", "Restart Command");
             this.put("command-restart-description", "Restart a level.");
             this.put("command-restart-not-playing", "You are not currently playing a level.");
             this.put("command-restart-success", "You have restarted the level [#00B4DB%level%&f].");
 
+            this.put("#25", "Teleport Command");
+            this.put("command-teleport-description", "Teleport back to your last checkpoint.");
+            this.put("command-teleport-not-playing", "You are not currently playing a level.");
 
-            this.put("#", "General Parkour Messages");
+            this.put("#26", "General Parkour Messages");
             this.put("region-not-found", "You are not in the correct region to do this.");
             this.put("parkour-finish", "You have finished the parkour level [#00B4DB%level%&f] in #00B4DB%time%&f.");
             this.put("parkour-finish-new-best", "You have beat your person best for [#00B4DB%level%&f] in #00B4DB%time%&f! Your previous best was #00B4DB%best%&f.");
             this.put("parkour-max-attempts", "You have reached the maximum number of attempts for [#00B4DB%level%&f] (%attempts%/%max_attempts%).");
             this.put("parkour-max-completions", "You have reached the maximum number of completions for [#00B4DB%level%&f] (%completions%/%max_completions%).");
 
-            this.put("#", "Argument Handler Messages");
+            this.put("#27", "Argument Handler Messages");
             this.put("argument-handler-level", "Parkour Level [%input%] doesn't exist.");
             this.put("argument-handler-player", "Player doesn't exist.");
         }};

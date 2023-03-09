@@ -51,7 +51,7 @@ public class DelCheckpointCommand extends RoseSubCommand {
 
     @Override
     protected String getDefaultName() {
-        return null;
+        return "delcheckpoint";
     }
 
 }

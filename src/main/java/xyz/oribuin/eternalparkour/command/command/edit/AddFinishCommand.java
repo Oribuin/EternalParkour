@@ -27,8 +27,10 @@ public class AddFinishCommand extends RoseSubCommand {
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
         ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
 
-        if (manager.startEditing(player, level, EditType.ADD_FINISH))
-            locale.sendMessage(player, "command-edit-add-finish-start", StringPlaceholders.single("name", level.getId()));
+        Level newLevel = manager.startEditing(player, level, EditType.ADD_FINISH);
+
+        if (newLevel != null)
+            locale.sendMessage(player, "command-edit-add-finish-start", StringPlaceholders.single("name", newLevel.getId()));
     }
 
     @Override

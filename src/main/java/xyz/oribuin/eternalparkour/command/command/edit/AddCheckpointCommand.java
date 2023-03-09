@@ -28,8 +28,10 @@ public class AddCheckpointCommand extends RoseSubCommand {
         ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
 
         // yes inconsistency with the locale key but i dont want to change it
-        if (manager.startEditing(player, level, EditType.ADD_CHECKPOINT))
-            locale.sendMessage(player, "command-edit-checkpoints-start", StringPlaceholders.single("name", level.getId()));
+        Level newLevel = manager.startEditing(player, level, EditType.ADD_CHECKPOINT);
+
+        if (newLevel != null)
+            locale.sendMessage(player, "command-edit-checkpoints-start", StringPlaceholders.single("name", newLevel.getId()));
 
     }
 

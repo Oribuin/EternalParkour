@@ -27,8 +27,10 @@ public class AddRegionCommand extends RoseSubCommand {
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
         ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
 
-        if (manager.startEditing(player, level, EditType.ADD_REGION))
-            locale.sendMessage(player, "command-edit-add-region-start", StringPlaceholders.single("name", level.getId()));
+        Level newLevel = manager.startEditing(player, level, EditType.ADD_REGION);
+
+        if (newLevel != null)
+            locale.sendMessage(player, "command-edit-add-region-start", StringPlaceholders.single("name", newLevel.getId()));
     }
 
     @Override
