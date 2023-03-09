@@ -1,7 +1,5 @@
 package xyz.oribuin.eternalparkour.manager;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.rosegarden.database.DataMigration;
@@ -10,20 +8,25 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import xyz.oribuin.eternalparkour.database.migration._1_CreateInitialTables;
+import xyz.oribuin.eternalparkour.parkour.ParkourPlayer;
 import xyz.oribuin.eternalparkour.parkour.UserData;
 import xyz.oribuin.eternalparkour.util.TimesCompleted;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class DataManager extends AbstractDataManager {
 
     // UUID = Player's UUID, String = Parkour ID, UserData = Parkour Data
-    private final Table<UUID, String, UserData> userData = HashBasedTable.create();
+    private final Map<UUID, ParkourPlayer> userData = new HashMap<>();
+    //    private final Table<UUID, String, UserData> userData = HashBasedTable.create();
     private final Gson gson = new Gson();
 
     public DataManager(RosePlugin rosePlugin) {
@@ -39,8 +42,29 @@ public class DataManager extends AbstractDataManager {
     @NotNull
     public List<UserData> getLevelData(@NotNull String level) {
         return this.userData.values().stream()
-                .filter(data -> data.getLevel().equals(level))
-                .toList();
+                .flatMap(x -> x.getUserData().values().stream())
+                .filter(x -> x.getLevel().equalsIgnoreCase(level))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get the cached data for a player
+     *
+     * @param uuid The player's UUID
+     * @return The cached data for the player
+     */
+    public ParkourPlayer getCachedPlayer(@NotNull UUID uuid) {
+        return this.userData.getOrDefault(uuid, new ParkourPlayer(uuid));
+    }
+
+    /**
+     * Get the cached data for a player
+     *
+     * @param player The player to get the data for
+     * @return The cached data for the player
+     */
+    public ParkourPlayer getCachedPlayer(@NotNull Player player) {
+        return this.userData.getOrDefault(player.getUniqueId(), new ParkourPlayer(player));
     }
 
     /**
@@ -49,7 +73,10 @@ public class DataManager extends AbstractDataManager {
      * @param data The data to cache
      */
     public void cacheUser(@NotNull UserData data) {
-        this.userData.put(data.getPlayer(), data.getLevel(), data);
+        ParkourPlayer player = this.userData.getOrDefault(data.getPlayer(), new ParkourPlayer(data.getPlayer()));
+
+        player.getUserData().put(data.getLevel(), data);
+        this.userData.put(data.getPlayer(), player);
     }
 
     /**
@@ -58,15 +85,11 @@ public class DataManager extends AbstractDataManager {
      * @param player The player to save
      */
     public void saveUser(@NotNull Player player) {
-        List<UserData> data = this.userData.values().stream()
-                .filter(x -> x.getPlayer().equals(player.getUniqueId()))
-                .toList();
 
-        if (data.isEmpty())
-            return;
+        ParkourPlayer pplayer = this.getCachedPlayer(player);
 
         this.async(task -> this.databaseConnector.connect(connection -> {
-            for (UserData entry : this.userData.values()) {
+            for (UserData entry : pplayer.getUserData().values()) {
                 final String update = "REPLACE INTO " + this.getTablePrefix() + "data (" +
                         "player, " +
                         "`level`, " +
@@ -141,7 +164,8 @@ public class DataManager extends AbstractDataManager {
      * @param data The user's data
      */
     public void deleteUser(@NotNull UserData data) {
-        this.userData.remove(data.getPlayer(), data.getLevel());
+        Optional.ofNullable(this.userData.get(data.getPlayer()))
+                .ifPresent(x -> x.getUserData().remove(data.getLevel()));
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ? AND level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
@@ -159,7 +183,7 @@ public class DataManager extends AbstractDataManager {
      * @param player The player to delete
      */
     public void deleteUser(@NotNull UUID player) {
-        this.userData.row(player).clear();
+        this.userData.remove(player);
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE player = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
@@ -176,7 +200,7 @@ public class DataManager extends AbstractDataManager {
      * @param level The level to delete
      */
     public void deleteLevel(@NotNull String level) {
-        this.userData.column(level).clear();
+        this.userData.values().forEach(x -> x.getUserData().remove(level));
 
         final String delete = "DELETE FROM " + this.getTablePrefix() + "data WHERE level = ?";
         this.async(task -> this.databaseConnector.connect(connection -> {
@@ -190,17 +214,14 @@ public class DataManager extends AbstractDataManager {
     /**
      * Get a player's data from the cache for a specific level
      *
-     * @param player The player to get data for
-     * @param level  The level to get data for
+     * @param uuid  The player to get data for
+     * @param level The level to get data for
      * @return The player's data for the level
      */
     @NotNull
-    public UserData getData(@NotNull UUID player, @NotNull String level) {
-        UserData data = this.userData.get(player, level);
-        if (data == null)
-            data = new UserData(player, level);
-
-        return data;
+    public UserData getData(@NotNull UUID uuid, @NotNull String level) {
+        return this.getCachedPlayer(uuid).getUserData()
+                .getOrDefault(level, new UserData(uuid, level));
     }
 
     /**
@@ -211,7 +232,9 @@ public class DataManager extends AbstractDataManager {
      */
     @NotNull
     public Map<String, UserData> getData(@NotNull UUID player) {
-        return this.userData.row(player);
+        return Optional.ofNullable(this.userData.get(player))
+                .map(ParkourPlayer::getUserData)
+                .orElseGet(HashMap::new);
     }
 
     /**
@@ -236,7 +259,10 @@ public class DataManager extends AbstractDataManager {
                     data.setLastTime(results.getLong("lastTime"));
                     data.setLastCompletion(results.getLong("lastCompletion"));
                     data.setTotalTimes(this.gson.fromJson(results.getString("totalTimes"), TimesCompleted.class).getTimes());
-                    this.userData.put(uuid, data.getLevel(), data);
+
+                    ParkourPlayer parkourPlayer = this.userData.getOrDefault(uuid, new ParkourPlayer(uuid));
+                    parkourPlayer.getUserData().put(data.getLevel(), data);
+                    this.userData.put(uuid, parkourPlayer);
                 }
             }
         }));
@@ -256,7 +282,7 @@ public class DataManager extends AbstractDataManager {
         this.rosePlugin.getServer().getScheduler().runTaskAsynchronously(rosePlugin, callback);
     }
 
-    public Table<UUID, String, UserData> getUserData() {
+    public Map<UUID, ParkourPlayer> getUserData() {
         return userData;
     }
 

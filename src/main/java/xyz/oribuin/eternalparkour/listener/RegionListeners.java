@@ -46,7 +46,7 @@ public class RegionListeners implements Listener {
         Player player = event.getPlayer();
 
         //Don't allow players to start a level if they are in creative mode or spectator mode
-        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
+        if (player.getGameMode() == GameMode.SPECTATOR) {
             return;
         }
 
@@ -63,11 +63,6 @@ public class RegionListeners implements Listener {
             if (from != null) {
                 if (!from.isEnabled()) // The level is disabled, so do not run the exit event.
                     return;
-
-                if (this.manager.isPlaying(player.getUniqueId())) {
-                    this.manager.failRun(player, true);
-                    return;
-                }
 
                 Region region = from.getRegionAt(event.getFrom());
                 // Don't know why this would be null, but just in case.
@@ -95,12 +90,7 @@ public class RegionListeners implements Listener {
         }
 
         // Signify that a player has left a region.
-        if (region == null && fromRegion != null) {
-            if (this.manager.isPlaying(player.getUniqueId())) {
-                this.manager.failRun(player, true);
-                return;
-            }
-
+        if (region == null && fromRegion != null && this.manager.isPlaying(player.getUniqueId())) {
             this.manager.cancelRun(player, false);
             this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, fromRegion, level));
         }
@@ -115,7 +105,7 @@ public class RegionListeners implements Listener {
             }
         }
 
-        RunSession session = this.manager.getRunSession(player);
+        RunSession session = this.manager.getRunSession(player.getUniqueId());
         if (fromRegion == null || region == null) // The player has switched regions.
             return;
 

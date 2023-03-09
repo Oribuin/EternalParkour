@@ -115,14 +115,20 @@ public class EnglishLocale implements Locale {
             this.put("command-admin-resetuser-all", "You have reset all player data for [#00B4DB%player%&f].");
             this.put("command-admin-resetuser-level", "You have reset [#00B4DB%level%&f] data for [#00B4DB%player%&f].");
 
-            this.put("#23", "General Parkour Messages");
+            this.put("#23", "Restart Command");
+            this.put("command-restart-description", "Restart a level.");
+            this.put("command-restart-not-playing", "You are not currently playing a level.");
+            this.put("command-restart-success", "You have restarted the level [#00B4DB%level%&f].");
+
+
+            this.put("#", "General Parkour Messages");
             this.put("region-not-found", "You are not in the correct region to do this.");
             this.put("parkour-finish", "You have finished the parkour level [#00B4DB%level%&f] in #00B4DB%time%&f.");
             this.put("parkour-finish-new-best", "You have beat your person best for [#00B4DB%level%&f] in #00B4DB%time%&f! Your previous best was #00B4DB%best%&f.");
             this.put("parkour-max-attempts", "You have reached the maximum number of attempts for [#00B4DB%level%&f] (%attempts%/%max_attempts%).");
             this.put("parkour-max-completions", "You have reached the maximum number of completions for [#00B4DB%level%&f] (%completions%/%max_completions%).");
 
-            this.put("#24", "Argument Handler Messages");
+            this.put("#", "Argument Handler Messages");
             this.put("argument-handler-level", "Parkour Level [%input%] doesn't exist.");
             this.put("argument-handler-player", "Player doesn't exist.");
         }};

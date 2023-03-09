@@ -43,30 +43,30 @@ public class EditorTimer extends BukkitRunnable {
 
     @Override
     public void run() {
-        for (Map.Entry<UUID, EditSession> entry : this.manager.getLevelEditors().entrySet()) {
-            Player player = Bukkit.getPlayer(entry.getKey());
+        this.manager.getLevelEditors().forEach((parkourPlayer, session) -> {
+            Player cachedPlayer = parkourPlayer.getPlayer();
+            Region spawnRegion =session.getLevel().getStartRegion();
 
-            Region spawnRegion = entry.getValue().getLevel().getStartRegion();
             if (spawnRegion != null) {
-                this.getCube(spawnRegion).forEach(location -> startParticle.spawn(player, location, 1));
+                this.getCube(spawnRegion).forEach(location -> startParticle.spawn(cachedPlayer, location, 1));
             }
 
-            Region endRegion = entry.getValue().getLevel().getFinishRegion();
+            Region endRegion = session.getLevel().getFinishRegion();
             if (endRegion != null) {
-                this.getCube(endRegion).forEach(location -> finishParticle.spawn(player, location, 1));
+                this.getCube(endRegion).forEach(location -> finishParticle.spawn(cachedPlayer, location, 1));
             }
 
             // all other regions
-            entry.getValue().getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> levelParticle.spawn(player, location, 1)));
+            session.getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> levelParticle.spawn(cachedPlayer, location, 1)));
 
             // All checkpoints
-            entry.getValue().getLevel().getCheckpoints().forEach((id, loc) -> {
+            session.getLevel().getCheckpoints().forEach((id, loc) -> {
                 Location corner1 = loc.clone().add(1, 2, 1);
                 Location corner2 = loc.clone();
 
-                this.getCube(corner1, corner2, 0).forEach(location -> checkpointParticle.spawn(player, location, 1));
+                this.getCube(corner1, corner2, 0).forEach(location -> checkpointParticle.spawn(cachedPlayer, location, 1));
             });
-        }
+        });
     }
 
     private List<Location> getCube(Region region) {
