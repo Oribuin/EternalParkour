@@ -150,9 +150,9 @@ public class DataManager extends AbstractDataManager {
                 statement.setInt(5, data.getAttempts());
                 statement.setLong(6, data.getBestTime());
                 statement.setLong(7, data.getBestTimeAchieved());
-                statement.setLong(9, data.getLastTime());
-                statement.setLong(10, data.getLastCompletion());
-                statement.setString(11, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
+                statement.setLong(8, data.getLastTime());
+                statement.setLong(9, data.getLastCompletion());
+                statement.setString(10, this.gson.toJson(new TimesCompleted(data.getTotalTimes())));
                 statement.executeUpdate();
             }
         }));

@@ -820,7 +820,9 @@ public class ParkourManager extends Manager {
             newBestTime = true;
             data.setBestTime(completionTime);
             data.setBestTimeAchieved(parkourRun.getEndTime());
-            this.cacheUser(data);
+
+            // The player has a new best time, so we need to update the level's best times
+            this.dataManager.saveUser(data);
 
             this.calculateLevel(level); // Calculate the level again, since the best time has changed and who knows, maybe the player is now in the top 10
         }
