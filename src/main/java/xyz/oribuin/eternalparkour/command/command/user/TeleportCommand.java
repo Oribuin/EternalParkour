@@ -45,7 +45,7 @@ public class TeleportCommand extends RoseCommand {
 
     @Override
     public String getRequiredPermission() {
-        return "eternalparkour.teleport.restart";
+        return "eternalparkour.command.teleport";
     }
 
     @Override
