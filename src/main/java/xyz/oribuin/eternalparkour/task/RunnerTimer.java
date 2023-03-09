@@ -38,28 +38,23 @@ public class RunnerTimer extends BukkitRunnable {
     public void run() {
         long current = System.currentTimeMillis();
 
-        for (Map.Entry<UUID, RunSession> entry : this.manager.getActiveRunners().entrySet()) {
-            Player player = Bukkit.getPlayer(entry.getKey());
-            RunSession runner = entry.getValue();
+        this.manager.getActiveRunners().forEach((uuid, runSession) -> {
+            Player cachedPlayer = this.manager.getPPlayer(uuid).getPlayer();
+            if (cachedPlayer == null)
+                return;
 
-            if (player == null || !player.isOnline()) {
-                this.manager.getActiveRunners().remove(entry.getKey());
-                continue;
-            }
-
-            StringPlaceholders placeholders = StringPlaceholders.single("time", PluginUtils.parseToScore(current - runner.getStartTime()));
+            StringPlaceholders placeholders = StringPlaceholders.single("time", PluginUtils.parseToScore(current - runSession.getStartTime()));
             if (PluginUtils.usingPaper()) {
-                player.sendActionBar(MiniMessage.miniMessage().deserialize(PAPI.apply(player, placeholders.apply(timerMessage))));
+                cachedPlayer.sendActionBar(MiniMessage.miniMessage().deserialize(PAPI.apply(cachedPlayer, placeholders.apply(timerMessage))));
                 return;
             }
 
-            // Player#spigot is so very cringe, but this is how it has to be done if we want to the plugin on spigot
+            // Player#spigot is so very cringe, but this is how it has to be done if we want to the plugin on spigot's website.
             // but realistically, who doesn't use paper?
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+            cachedPlayer.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                     TextComponent.fromLegacyText(HexUtils.colorify(
-                            PAPI.apply(player, placeholders.apply(timerMessage))
-                    )));
-        }
+                            PAPI.apply(cachedPlayer, placeholders.apply(timerMessage)))));
+        });
     }
 
 }

@@ -52,6 +52,10 @@ public class PAPI extends PlaceholderExpansion {
         if (params.equalsIgnoreCase("max_checkpoints")) {
             return isPlaying ? String.valueOf(manager.getRunSession(player.getUniqueId()).getLevel().getCheckpoints().size()) : "N/A";
         }
+        // TODO
+//        if (params.startsWith("session_")) {
+//            return this.getSessionPlaceholders(this.getSession(player));
+//        }
 
         // All of these placeholders require a level argument
         String[] args = params.split("_");
@@ -64,7 +68,7 @@ public class PAPI extends PlaceholderExpansion {
             return null;
 
         if (this.levelPlaceholders.get(level) == null)
-            this.levelPlaceholders.put(level, this.getPlaceholders(level));
+            this.levelPlaceholders.put(level, this.getLevelPlaceholders(level));
 
         // Alternative placeholders that require multiple args
         if (args[0].equalsIgnoreCase("get")) {
@@ -98,7 +102,7 @@ public class PAPI extends PlaceholderExpansion {
         return function.apply(player);
     }
 
-    private Map<String, Function<OfflinePlayer, String>> getPlaceholders(@NotNull Level level) {
+    private Map<String, Function<OfflinePlayer, String>> getLevelPlaceholders(@NotNull Level level) {
         return new HashMap<>() {{
 
             // The general user data
@@ -130,6 +134,21 @@ public class PAPI extends PlaceholderExpansion {
 
         }};
     }
+
+    private Map<String, String> getSessionPlaceholders(@NotNull RunSession session) {
+        long currentTime = session.getStartTime() - System.currentTimeMillis();
+
+        return new HashMap<>() {{
+            this.put("level", session.getLevel().getId());
+            this.put("checkpoint", String.valueOf(session.getCheckpoint()));
+            this.put("max_checkpoints", String.valueOf(session.getLevel().getCheckpoints().size()));
+            this.put("attempts", String.valueOf(session.getAttempts()));
+            this.put("time", PluginUtils.parseFromTime(currentTime));
+            this.put("time_raw", String.valueOf(currentTime));
+            this.put("time_formatted", PluginUtils.parseToScore(currentTime));
+        }};
+    }
+
 
     /**
      * Get the level data for the player.

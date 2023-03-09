@@ -24,7 +24,7 @@ public class CreateCommand extends RoseCommand {
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
         if (manager.getLevel(name) != null) {
-            locale.sendMessage(player, "command-create-already-exists");
+            locale.sendMessage(player, "command-create-already-exists", StringPlaceholders.single("name", name));
             return;
         }
 

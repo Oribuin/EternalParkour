@@ -11,12 +11,13 @@ import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 
-public class DelStartCommand extends RoseSubCommand {
+public class DelCheckpointCommand extends RoseSubCommand {
 
-    public DelStartCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
+    public DelCheckpointCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
         super(rosePlugin, parent);
     }
 
@@ -37,13 +38,20 @@ public class DelStartCommand extends RoseSubCommand {
             level = session.getLevel();
         }
 
-        level.setStartRegion(null);
-        locale.sendMessage(context.getSender(), "command-edit-del-start-success", StringPlaceholders.single("name", level.getId()));
+        Checkpoint checkpoint = level.getCheckpoint(player.getLocation());
+        if (checkpoint == null) {
+            locale.sendMessage(player, "command-edit-del-checkpoint-fail");
+            return;
+        }
+
+        level.getCheckpoints().remove(checkpoint.getId());
+        level.reorganizeCheckpoints();
+        locale.sendMessage(player, "command-edit-del-checkpoint-success", StringPlaceholders.single("name", level.getId()));
     }
 
     @Override
     protected String getDefaultName() {
-        return "delstart";
+        return "delcheckpoint";
     }
 
 }

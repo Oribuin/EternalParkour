@@ -1,6 +1,5 @@
 package xyz.oribuin.eternalparkour.task;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -10,13 +9,10 @@ import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Region;
-import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * This is the task that will display the time for the player in the action bar.
@@ -43,30 +39,32 @@ public class EditorTimer extends BukkitRunnable {
 
     @Override
     public void run() {
-        for (Map.Entry<UUID, EditSession> entry : this.manager.getLevelEditors().entrySet()) {
-            Player player = Bukkit.getPlayer(entry.getKey());
+        this.manager.getLevelEditors().forEach((uuid, session) -> {
+            Player cachedPlayer = this.manager.getPPlayer(uuid).getPlayer();
+            if (cachedPlayer == null)
+                return;
 
-            Region spawnRegion = entry.getValue().getLevel().getStartRegion();
+            Region spawnRegion = session.getLevel().getStartRegion();
+
             if (spawnRegion != null) {
-                this.getCube(spawnRegion).forEach(location -> startParticle.spawn(player, location, 1));
+                this.getCube(spawnRegion).forEach(location -> startParticle.spawn(cachedPlayer, location, 1));
             }
 
-            Region endRegion = entry.getValue().getLevel().getFinishRegion();
+            Region endRegion = session.getLevel().getFinishRegion();
             if (endRegion != null) {
-                this.getCube(endRegion).forEach(location -> finishParticle.spawn(player, location, 1));
+                this.getCube(endRegion).forEach(location -> finishParticle.spawn(cachedPlayer, location, 1));
             }
+
+            // Checkpoint regions
+            session.getLevel().getCheckpoints().values().forEach(checkpoint -> {
+                Region region = checkpoint.getRegion();
+                if (region != null)
+                    this.getCube(region).forEach(location -> checkpointParticle.spawn(cachedPlayer, location, 1));
+            });
 
             // all other regions
-            entry.getValue().getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> levelParticle.spawn(player, location, 1)));
-
-            // All checkpoints
-            entry.getValue().getLevel().getCheckpoints().forEach((id, loc) -> {
-                Location corner1 = loc.clone().add(1, 2, 1);
-                Location corner2 = loc.clone();
-
-                this.getCube(corner1, corner2, 0).forEach(location -> checkpointParticle.spawn(player, location, 1));
-            });
-        }
+            session.getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> levelParticle.spawn(cachedPlayer, location, 1)));
+        });
     }
 
     private List<Location> getCube(Region region) {

@@ -5,6 +5,7 @@ import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.RoseCommandWrapper;
 import dev.rosewood.rosegarden.command.framework.RoseSubCommand;
 import dev.rosewood.rosegarden.command.framework.annotation.Inject;
+import dev.rosewood.rosegarden.command.framework.annotation.Optional;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
 import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.entity.Player;
@@ -20,13 +21,16 @@ public class AddFinishCommand extends RoseSubCommand {
     }
 
     @RoseExecutable
-    public void execute(@Inject CommandContext context, Level level) {
+    public void execute(@Inject CommandContext context, @Optional Level level) {
         Player player = (Player) context.getSender();
-        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
-        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
 
-        manager.startEditing(player, level, EditType.ADD_FINISH);
-        locale.sendMessage(player, "command-edit-add-finish-start", StringPlaceholders.single("name", level.getId()));
+        LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
+        ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+
+        Level newLevel = manager.startEditing(player, level, EditType.ADD_FINISH);
+
+        if (newLevel != null)
+            locale.sendMessage(player, "command-edit-add-finish-start", StringPlaceholders.single("name", newLevel.getId()));
     }
 
     @Override

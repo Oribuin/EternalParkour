@@ -13,6 +13,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
@@ -20,6 +21,7 @@ import xyz.oribuin.eternalparkour.parkour.edit.EditType;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
 
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,14 +53,13 @@ public class EditorListeners implements Listener {
         event.setCancelled(true);
 
         // If the player is creating a region
-        if (editSession.getType() == EditType.ADD_REGION || editSession.getType() == EditType.ADD_FINISH || editSession.getType() == EditType.ADD_START) {
+        if (editSession.getType() == EditType.ADD_REGION
+                || editSession.getType() == EditType.ADD_FINISH
+                || editSession.getType() == EditType.ADD_START
+                || editSession.getType() == EditType.ADD_CHECKPOINT) {
             this.editRegion(player, editSession, block, action);
-            return;
         }
 
-        if (editSession.getType() == EditType.CHANGE_CHECKPOINTS) {
-            this.editCheckpoint(player, editSession, block);
-        }
     }
 
     /**
@@ -92,7 +93,7 @@ public class EditorListeners implements Listener {
         if (current.getPos1() != null && current.getPos2() != null) {
 
             // We're not adding a region that already exists
-            if (session.getType() == EditType.ADD_REGION && session.getLevel().isParkourRegion(current)) {
+            if ((session.getType() == EditType.ADD_REGION || session.getType() == EditType.ADD_CHECKPOINT) && session.getLevel().isParkourRegion(current)) {
                 return;
             }
 
@@ -100,61 +101,24 @@ public class EditorListeners implements Listener {
                 case ADD_REGION -> session.getLevel().getLevelRegions().add(current);
                 case ADD_START -> session.getLevel().setStartRegion(current);
                 case ADD_FINISH -> session.getLevel().setFinishRegion(current);
+                case ADD_CHECKPOINT -> {
+                    Level level = session.getLevel(); // Get the level
+                    Location teleport = current.getPos1().clone().add(current.getPos2()).multiply(0.5); // Get the middle of the region
+                    int nextId = level.getCheckpoints().size() + 1; // Get the next checkpoint id
+
+                    Checkpoint checkpoint = new Checkpoint(nextId); // Create the checkpoint
+                    checkpoint.setTeleport(teleport);
+                    checkpoint.setRegion(current);
+
+                    level.getCheckpoints().put(nextId, checkpoint);
+                    level.reorganizeCheckpoints(); // Reorganize the checkpoints
+                }
             }
 
             this.manager.saveLevel(session.getLevel());
             this.manager.startEditing(player, session.getLevel(), session.getType());
         }
 
-    }
-
-    /**
-     * Edit all the checkpoints of the level
-     *
-     * @param player  The player editing the checkpoints
-     * @param session The edit session
-     * @param block   The block the player clicked
-     */
-    private void editCheckpoint(Player player, EditSession session, Block block) {
-        Level level = session.getLevel();
-        Map<Integer, Location> checkpoints = level.getCheckpoints();
-
-        // Get checkpoint from the block
-        Map.Entry<Integer, Location> checkpoint = checkpoints.entrySet().stream()
-                .filter(entry -> entry.getValue().equals(block.getLocation()))
-                .findFirst()
-                .orElse(null);
-
-        List<Location> particleLocations = this.getCube(block.getLocation(), block.getLocation().clone().add(1, 1, 1), 0.5);
-        ParticleData particle = new ParticleData(Particle.REDSTONE);
-
-        // Add a new checkpoint
-        if (checkpoint == null) {
-            checkpoints.put(checkpoints.size() + 1, block.getLocation());
-            particle.setDustColor(Color.LIME)
-                    .cacheParticleData();
-
-            particleLocations.forEach(location -> particle.spawn(player, location, 1));
-            level.setCheckpoints(checkpoints);
-            this.manager.saveEditSession(player);
-            return;
-        }
-
-        // Remove a checkpoint
-        checkpoints.remove(checkpoint.getKey());
-
-        // Reorder the checkpoints
-        Map<Integer, Location> newCheckpoints = new HashMap<>();
-        int i = 1;
-        for (Map.Entry<Integer, Location> entry : checkpoints.entrySet()) {
-            newCheckpoints.put(i++, entry.getValue());
-        }
-
-        particle.setDustColor(Color.RED).cacheParticleData();
-
-        particleLocations.forEach(location -> particle.spawn(player, location, 1));
-        level.setCheckpoints(newCheckpoints);
-        this.manager.saveEditSession(player);
     }
 
     /**

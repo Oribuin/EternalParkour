@@ -1,7 +1,6 @@
 package xyz.oribuin.eternalparkour.listener;
 
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,16 +10,13 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.event.PlayerEnterRegionEvent;
 import xyz.oribuin.eternalparkour.event.PlayerExitRegionEvent;
-import xyz.oribuin.eternalparkour.event.PlayerFinishLevelEvent;
-import xyz.oribuin.eternalparkour.event.PlayerStartLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerSwitchRegionEvent;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
-
-import java.util.Map;
 
 /**
  * This is where we handle all the events for deciding when a player is entering or exiting a region.
@@ -46,7 +42,7 @@ public class RegionListeners implements Listener {
         Player player = event.getPlayer();
 
         //Don't allow players to start a level if they are in creative mode or spectator mode
-        if (player.getGameMode() == GameMode.SPECTATOR || player.getGameMode() == GameMode.CREATIVE) {
+        if (player.getGameMode() == GameMode.SPECTATOR) {
             return;
         }
 
@@ -64,17 +60,12 @@ public class RegionListeners implements Listener {
                 if (!from.isEnabled()) // The level is disabled, so do not run the exit event.
                     return;
 
-                if (this.manager.isPlaying(player.getUniqueId())) {
-                    this.manager.failRun(player, true);
-                    return;
-                }
-
                 Region region = from.getRegionAt(event.getFrom());
                 // Don't know why this would be null, but just in case.
                 if (region == null)
                     return;
 
-                this.manager.cancelRun(player, false);
+                this.manager.failRun(player);
                 this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, region, from));
                 return;
             }
@@ -95,13 +86,8 @@ public class RegionListeners implements Listener {
         }
 
         // Signify that a player has left a region.
-        if (region == null && fromRegion != null) {
-            if (this.manager.isPlaying(player.getUniqueId())) {
-                this.manager.failRun(player, true);
-                return;
-            }
-
-            this.manager.cancelRun(player, false);
+        if (region == null && fromRegion != null && this.manager.isPlaying(player.getUniqueId())) {
+            this.manager.cancelRun(player, true);
             this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, fromRegion, level));
         }
 
@@ -115,16 +101,17 @@ public class RegionListeners implements Listener {
             }
         }
 
-        RunSession session = this.manager.getRunSession(player);
+        RunSession session = this.manager.getRunSession(player.getUniqueId());
         if (fromRegion == null || region == null) // The player has switched regions.
             return;
 
+        // May have to use Level#isCheckpointRegion here.
         if (level.getCheckpoints().size() > 0 && session != null) {
-            Map.Entry<Integer, Location> checkpoint = level.getCheckpoint(player.getLocation());
+            Checkpoint checkpoint = level.getCheckpoint(player.getLocation());
             if (this.manager.isPlaying(player.getUniqueId()) && checkpoint != null) {
 
                 // Don't change the checkpoint if it was already hit
-                if (session.getCheckpoint() != null && checkpoint.getKey() <= session.getCheckpoint().getKey()) {
+                if (session.getCheckpoint() != null && checkpoint.getId() <= session.getCheckpoint().getId()) {
                     return;
                 }
 
@@ -134,6 +121,8 @@ public class RegionListeners implements Listener {
                 return;
             }
         }
+
+
 
         // Check if the player is going from parkour region -> finish region.
         if (level.isParkourRegion(fromRegion) && level.isFinishRegion(region) && session != null) {
