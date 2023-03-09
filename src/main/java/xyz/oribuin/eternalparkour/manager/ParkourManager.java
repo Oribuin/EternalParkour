@@ -46,8 +46,8 @@ public class ParkourManager extends Manager {
 
     // Map of all levels
     private final Map<String, Level> levelData = new HashMap<>(); // All level data
-    private final Map<ParkourPlayer, EditSession> levelEditors = new HashMap<>(); // List of players editing a level
-    private final Map<ParkourPlayer, RunSession> activeRunners = new HashMap<>(); // List of players currently running a parkour
+    private final Map<UUID, EditSession> levelEditors = new HashMap<>(); // List of players editing a level
+    private final Map<UUID, RunSession> activeRunners = new HashMap<>(); // List of players currently running a parkour
 
     // Other ~ funny ~ stuff
     private final DataManager dataManager = this.rosePlugin.getManager(DataManager.class);
@@ -481,7 +481,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public Level getPlayingLevel(@NotNull UUID uuid) {
-        RunSession session = this.activeRunners.get(this.getPPlayer(uuid));
+        RunSession session = this.activeRunners.get(uuid);
         if (session == null) {
             return null;
         }
@@ -631,7 +631,7 @@ public class ParkourManager extends Manager {
         }
 
         // Check if the player is editing a level, if the player is viewing the level, who cares
-        if (this.levelEditors.containsKey(pplayer) && this.levelEditors.get(pplayer).getType() != EditType.VIEWING)
+        if (this.levelEditors.containsKey(player.getUniqueId()) && this.levelEditors.get(player.getUniqueId()).getType() != EditType.VIEWING)
             return null;
 
         // Don't allow players to start a level if they are in spectator mode or flying
@@ -688,7 +688,7 @@ public class ParkourManager extends Manager {
             return null;
         }
 
-        this.activeRunners.put(pplayer, parkourRun);
+        this.activeRunners.put(player.getUniqueId(), parkourRun);
         return parkourRun;
     }
 
@@ -702,6 +702,7 @@ public class ParkourManager extends Manager {
         ParkourPlayer pplayer = this.getPPlayer(player);
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
         Level level = this.getPlayingLevel(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
         long finishTime = System.currentTimeMillis(); // We're declaring it here, so we can get the most accurate time
 
         // Player is not playing a level
@@ -710,7 +711,7 @@ public class ParkourManager extends Manager {
         }
 
         // Check if the player is editing a level, if the player is viewing the level, who cares
-        if (this.levelEditors.containsKey(pplayer) && this.levelEditors.get(pplayer).getType() != EditType.VIEWING)
+        if (this.levelEditors.containsKey(uuid) && this.levelEditors.get(uuid).getType() != EditType.VIEWING)
             return;
 
         // Don't allow players to finish a level if they are in spectator mode or flying
@@ -718,7 +719,7 @@ public class ParkourManager extends Manager {
             return;
         }
 
-        RunSession parkourRun = this.activeRunners.get(pplayer);
+        RunSession parkourRun = this.activeRunners.get(uuid);
         parkourRun.setEndTime(finishTime);
 
         PlayerFinishLevelEvent event = new PlayerFinishLevelEvent(player, level, parkourRun);
@@ -727,7 +728,7 @@ public class ParkourManager extends Manager {
             return;
         }
 
-        this.activeRunners.remove(pplayer); // Remove the player from the active runners
+        this.activeRunners.remove(uuid); // Remove the player from the active runners
 
         UserData data = this.getUser(player.getUniqueId(), level.getId());
         if (level.getTeleport() != null)
@@ -791,13 +792,13 @@ public class ParkourManager extends Manager {
 
         // Player is not playing a level
         ParkourPlayer pplayer = this.getPPlayer(player);
-        RunSession run = this.activeRunners.get(pplayer);
+        RunSession run = this.activeRunners.get(player.getUniqueId());
 
         if (run == null)
             return;
 
         // Send cancel message here
-        this.activeRunners.remove(pplayer);
+        this.activeRunners.remove(player.getUniqueId());
 
         if (run.getLevel().getTeleport() != null && teleport)
             this.teleport(player, run.getLevel().getTeleport());
@@ -821,7 +822,7 @@ public class ParkourManager extends Manager {
         // Teleport the player back to the checkpoint if they have one
         if (session.getCheckpoint() != null) {
             session.setAttempts(session.getAttempts() + 1);
-            this.activeRunners.put(pplayer, session);
+            this.activeRunners.put(player.getUniqueId(), session);
 
             Map.Entry<Integer, Location> checkpoint = session.getCheckpoint();
             if (level.getCheckpoints().size() > 0 && checkpoint != null) {
@@ -865,7 +866,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public RunSession getRunSession(@NotNull ParkourPlayer player) {
-        return this.activeRunners.get(player);
+        return this.activeRunners.get(player.getUUID());
     }
 
     /**
@@ -876,7 +877,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public RunSession getRunSession(@NotNull UUID uuid) {
-        return this.activeRunners.get(this.getPPlayer(uuid));
+        return this.activeRunners.get(uuid);
     }
 
     /**
@@ -887,7 +888,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public RunSession getRunSession(@NotNull Player player) {
-        return this.activeRunners.get(this.getPPlayer(player));
+        return this.activeRunners.get(player);
     }
 
     /**
@@ -896,7 +897,7 @@ public class ParkourManager extends Manager {
      * @param session The session
      */
     public void saveRunSession(@NotNull RunSession session) {
-        this.activeRunners.put(this.getPPlayer(session.getPlayer()), session);
+        this.activeRunners.put(session.getPlayer(), session);
     }
 
     /**
@@ -910,7 +911,7 @@ public class ParkourManager extends Manager {
         if (session == null)
             return false;
 
-        this.activeRunners.remove(player);
+        this.activeRunners.remove(player.getUUID());
         return true;
     }
 
@@ -923,17 +924,12 @@ public class ParkourManager extends Manager {
      */
     public void startEditing(@NotNull Player player, @NotNull Level level, @NotNull EditType type) {
         ParkourPlayer pplayer = this.getPPlayer(player);
-        System.out.println("Starting edit session for " + player.getName());
 
-        if (this.isedi)
-        if (this.levelEditors.containsKey(pplayer)) {
+        if (this.levelEditors.containsKey(player.getUniqueId())) {
             this.saveEditSession(player);
-            System.out.println("Modified edit session for " + player.getName());
         }
 
-        if (this.levelEditors.put(pplayer, new EditSession(level, type)) != null) {
-            System.out.println("Created new edit session for " + player.getName());
-        }
+        this.levelEditors.put(player.getUniqueId(), new EditSession(level, type));
     }
 
     /**
@@ -943,12 +939,12 @@ public class ParkourManager extends Manager {
      */
     public void stopEditing(@NotNull Player player) {
         ParkourPlayer pplayer = this.getPPlayer(player);
-        EditSession session = this.levelEditors.get(pplayer);
+        EditSession session = this.levelEditors.get(player.getUniqueId());
         if (session == null)
             return;
 
         this.saveEditSession(player);
-        this.levelEditors.remove(pplayer);
+        this.levelEditors.remove(player.getUniqueId());
     }
 
     /**
@@ -959,7 +955,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public EditSession getEditSession(@NotNull Player player) {
-        return this.levelEditors.get(this.getPPlayer(player));
+        return this.levelEditors.get(player.getUniqueId());
     }
 
     /**
@@ -970,7 +966,7 @@ public class ParkourManager extends Manager {
      */
     @Nullable
     public EditSession getEditSession(@NotNull UUID uuid) {
-        return this.levelEditors.get(this.getPPlayer(uuid));
+        return this.levelEditors.get(uuid);
     }
 
     /**
@@ -980,7 +976,7 @@ public class ParkourManager extends Manager {
      */
     public void saveEditSession(@NotNull Player player) {
         ParkourPlayer pplayer = this.getPPlayer(player);
-        EditSession session = this.levelEditors.get(pplayer);
+        EditSession session = this.levelEditors.get(player.getUniqueId());
         if (session == null)
             return;
 
@@ -1067,7 +1063,7 @@ public class ParkourManager extends Manager {
     }
 
     public boolean isEditing(Player player) {
-    	return this.levelEditors.containsKey(this.getPPlayer(player.getUniqueId()));
+        return this.levelEditors.containsKey(player.getUniqueId());
     }
 
     @Override
@@ -1081,11 +1077,11 @@ public class ParkourManager extends Manager {
         return this.levelData;
     }
 
-    public Map<ParkourPlayer, EditSession> getLevelEditors() {
+    public Map<UUID, EditSession> getLevelEditors() {
         return this.levelEditors;
     }
 
-    public Map<ParkourPlayer, RunSession> getActiveRunners() {
+    public Map<UUID, RunSession> getActiveRunners() {
         return this.activeRunners;
     }
 

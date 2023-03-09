@@ -1,6 +1,5 @@
 package xyz.oribuin.eternalparkour.task;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -10,13 +9,10 @@ import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Region;
-import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 import xyz.oribuin.eternalparkour.particle.ParticleData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * This is the task that will display the time for the player in the action bar.
@@ -43,9 +39,12 @@ public class EditorTimer extends BukkitRunnable {
 
     @Override
     public void run() {
-        this.manager.getLevelEditors().forEach((parkourPlayer, session) -> {
-            Player cachedPlayer = parkourPlayer.getPlayer();
-            Region spawnRegion =session.getLevel().getStartRegion();
+        this.manager.getLevelEditors().forEach((uuid, session) -> {
+            Player cachedPlayer = this.manager.getPPlayer(uuid).getPlayer();
+            if (cachedPlayer == null)
+                return;
+
+            Region spawnRegion = session.getLevel().getStartRegion();
 
             if (spawnRegion != null) {
                 this.getCube(spawnRegion).forEach(location -> startParticle.spawn(cachedPlayer, location, 1));

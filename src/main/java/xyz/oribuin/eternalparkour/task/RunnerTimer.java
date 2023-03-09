@@ -38,12 +38,10 @@ public class RunnerTimer extends BukkitRunnable {
     public void run() {
         long current = System.currentTimeMillis();
 
-        this.manager.getActiveRunners().forEach((parkourPlayer, runSession) -> {
-            Player cachedPlayer = parkourPlayer.getPlayer();
-
-            if (cachedPlayer == null) {
+        this.manager.getActiveRunners().forEach((uuid, runSession) -> {
+            Player cachedPlayer = this.manager.getPPlayer(uuid).getPlayer();
+            if (cachedPlayer == null)
                 return;
-            }
 
             StringPlaceholders placeholders = StringPlaceholders.single("time", PluginUtils.parseToScore(current - runSession.getStartTime()));
             if (PluginUtils.usingPaper()) {
