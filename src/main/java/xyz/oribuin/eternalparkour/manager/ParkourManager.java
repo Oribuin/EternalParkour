@@ -786,7 +786,7 @@ public class ParkourManager extends Manager {
         this.activeRunners.remove(uuid); // Remove the player from the active runners
 
         UserData data = this.getUser(player.getUniqueId(), level.getId());
-        if (level.getTeleport() != null)
+        if (level.getTeleport() != null && Setting.GENERAL_TELEPORT_ON_FINISH.getBoolean())
             this.teleport(player, level.getTeleport());
 
         // Check if the player has finished the level before the cooldown ends
