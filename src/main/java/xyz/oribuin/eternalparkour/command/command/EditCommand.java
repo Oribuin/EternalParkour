@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.command.command.edit.AddFinishCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.AddRegionCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.AddStartCommand;
-import xyz.oribuin.eternalparkour.command.command.edit.CheckpointsCommand;
+import xyz.oribuin.eternalparkour.command.command.edit.AddCheckpointCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelFinishCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelRegionCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelStartCommand;
@@ -27,7 +27,7 @@ public class EditCommand extends RoseCommand {
                 AddFinishCommand.class,
                 AddRegionCommand.class,
                 AddStartCommand.class,
-                CheckpointsCommand.class,
+                AddCheckpointCommand.class,
                 DelFinishCommand.class,
                 DelRegionCommand.class,
                 DelStartCommand.class,

@@ -55,16 +55,15 @@ public class EditorTimer extends BukkitRunnable {
                 this.getCube(endRegion).forEach(location -> finishParticle.spawn(cachedPlayer, location, 1));
             }
 
+            // Checkpoint regions
+            session.getLevel().getCheckpoints().values().forEach(checkpoint -> {
+                Region region = checkpoint.getRegion();
+                if (region != null)
+                    this.getCube(region).forEach(location -> checkpointParticle.spawn(cachedPlayer, location, 1));
+            });
+
             // all other regions
             session.getLevel().getLevelRegions().forEach(region -> this.getCube(region).forEach(location -> levelParticle.spawn(cachedPlayer, location, 1)));
-
-            // All checkpoints
-            session.getLevel().getCheckpoints().forEach((id, loc) -> {
-                Location corner1 = loc.clone().add(1, 2, 1);
-                Location corner2 = loc.clone();
-
-                this.getCube(corner1, corner2, 0).forEach(location -> checkpointParticle.spawn(cachedPlayer, location, 1));
-            });
         });
     }
 

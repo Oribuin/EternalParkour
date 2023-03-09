@@ -11,9 +11,9 @@ import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
 
-public class RestartCommand extends RoseCommand {
+public class TeleportCommand extends RoseCommand {
 
-    public RestartCommand(RosePlugin plugin, RoseCommandWrapper parent) {
+    public TeleportCommand(RosePlugin plugin, RoseCommandWrapper parent) {
         super(plugin, parent);
     }
 
@@ -25,27 +25,27 @@ public class RestartCommand extends RoseCommand {
 
         RunSession session = manager.getRunSession(player.getUniqueId());
         if (session == null) {
-            locale.sendMessage(player, "command-restart-not-playing");
+            locale.sendMessage(player, "command-teleport-not-playing");
             return;
         }
 
-        manager.cancelRun(player, true);
-        locale.sendMessage(player, "command-restart-success", StringPlaceholders.single("level", session.getLevel().getId()));
+        manager.failRun(player);
+        locale.sendMessage(player, "command-teleport-success", StringPlaceholders.single("level", session.getLevel().getId()));
     }
 
     @Override
     protected String getDefaultName() {
-        return "restart";
+        return "teleport";
     }
 
     @Override
     public String getDescriptionKey() {
-        return "command-restart-description";
+        return "command-teleport-description";
     }
 
     @Override
     public String getRequiredPermission() {
-        return "eternalparkour.command.restart";
+        return "eternalparkour.teleport.restart";
     }
 
     @Override

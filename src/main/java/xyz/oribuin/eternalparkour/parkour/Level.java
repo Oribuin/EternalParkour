@@ -18,7 +18,7 @@ public class Level {
     private @Nullable Region startRegion; // The start region of the level
     private @NotNull List<Region> levelRegions; // List of regions for the level
     private @Nullable Region finishRegion; // Region that the player must stand in to finish the level
-    private @NotNull Map<Integer, Location> checkpoints; // Map of checkpoints for the level
+    private @NotNull Map<Integer, Checkpoint> checkpoints; // Map of checkpoints for the level
     private @NotNull List<Action> commands; // Commands to run when the player finishes the level
     private long averageTime; // Average time to complete the level
     private int timesCompleted; // Times the level has been completed
@@ -97,21 +97,91 @@ public class Level {
     }
 
     /**
+     * Check if the location is inside a checkpoint region
+     *
+     * @param region The region to check
+     * @return Whether the location is inside a checkpoint region
+     */
+    public boolean isCheckpointRegion(@NotNull Region region) {
+        for (Checkpoint checkpoint : this.checkpoints.values()) {
+            if (checkpoint.getRegion() != null && checkpoint.getRegion().equals(region))
+                return true;
+        }
+
+        return false;
+    }
+    /**
      * Get the checkpoint at a location in the level.
      *
      * @param location The location to check.
      * @return The checkpoint id
      */
     @Nullable
-    public Map.Entry<Integer, Location> getCheckpoint(@NotNull Location location) {
-        // check if location is inside a checkpoint
-        for (Map.Entry<Integer, Location> entry : this.checkpoints.entrySet()) {
-            if (entry.getValue().distance(location) < 1)
-                return entry;
+    public Checkpoint getCheckpoint(@NotNull Location location) {
+        for (Checkpoint checkpoint : this.checkpoints.values()) {
+            if (checkpoint.getRegion() != null && checkpoint.getRegion().isInside(location))
+                return checkpoint;
         }
 
         return null;
     }
+
+    /**
+     * Get the previous available checkpoint relative to the current checkpoint
+     *
+     * @param current The current checkpoint
+     * @return The previous checkpoint
+     */
+    @Nullable
+    public Checkpoint getPreviousCheckpoint(int current) {
+        if (current == 0) // May be redundant
+            return null;
+
+        for (int i = current; i > 0; i--) {
+            Checkpoint checkpoint = this.checkpoints.get(i);
+            if (checkpoint != null && checkpoint.getRegion() != null && checkpoint.getTeleport() != null) // Check if the checkpoint is valid
+                return checkpoint;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the next available checkpoint relative to the current checkpoint
+     *
+     * @param current The current checkpoint
+     * @return The next checkpoint
+     */
+    @Nullable
+    public Checkpoint getNextCheckpoint(int current) {
+        if (current == this.checkpoints.size() - 1) // May be redundant
+            return null;
+
+        for (int i = current; i < this.checkpoints.size(); i++) {
+            Checkpoint checkpoint = this.checkpoints.get(i);
+            if (checkpoint != null && checkpoint.getRegion() != null && checkpoint.getTeleport() != null) // Check if the checkpoint is valid
+                return checkpoint;
+        }
+
+        return null;
+    }
+
+    /**
+     * Reorganize the checkpoints to ensure they are in order
+     *
+     * This is called when a checkpoint is added or removed
+     */
+    public void reorganizeCheckpoints() {
+        Map<Integer, Checkpoint> newCheckpoints = new LinkedHashMap<>();
+        int i = 0;
+        for (Checkpoint checkpoint : this.checkpoints.values()) {
+            newCheckpoints.put(i, checkpoint);
+            i++;
+        }
+
+        this.checkpoints = newCheckpoints;
+    }
+
 
     /**
      * Get the current leaderboard position of a user
@@ -187,11 +257,11 @@ public class Level {
         this.finishRegion = finishRegion;
     }
 
-    public @NotNull Map<Integer, Location> getCheckpoints() {
+    public @NotNull Map<Integer, Checkpoint> getCheckpoints() {
         return checkpoints;
     }
 
-    public void setCheckpoints(@NotNull Map<Integer, Location> checkpoints) {
+    public void setCheckpoints(@NotNull Map<Integer, Checkpoint> checkpoints) {
         this.checkpoints = checkpoints;
     }
 

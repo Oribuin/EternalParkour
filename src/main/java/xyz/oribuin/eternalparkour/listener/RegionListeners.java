@@ -15,11 +15,13 @@ import xyz.oribuin.eternalparkour.event.PlayerFinishLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerStartLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerSwitchRegionEvent;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -109,12 +111,13 @@ public class RegionListeners implements Listener {
         if (fromRegion == null || region == null) // The player has switched regions.
             return;
 
+        // May have to use Level#isCheckpointRegion here.
         if (level.getCheckpoints().size() > 0 && session != null) {
-            Map.Entry<Integer, Location> checkpoint = level.getCheckpoint(player.getLocation());
+            Checkpoint checkpoint = level.getCheckpoint(player.getLocation());
             if (this.manager.isPlaying(player.getUniqueId()) && checkpoint != null) {
 
                 // Don't change the checkpoint if it was already hit
-                if (session.getCheckpoint() != null && checkpoint.getKey() <= session.getCheckpoint().getKey()) {
+                if (session.getCheckpoint() != null && checkpoint.getId() <= session.getCheckpoint().getId()) {
                     return;
                 }
 
@@ -124,6 +127,8 @@ public class RegionListeners implements Listener {
                 return;
             }
         }
+
+
 
         // Check if the player is going from parkour region -> finish region.
         if (level.isParkourRegion(fromRegion) && level.isFinishRegion(region) && session != null) {

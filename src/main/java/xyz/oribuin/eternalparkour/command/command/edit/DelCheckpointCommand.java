@@ -11,12 +11,13 @@ import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import org.bukkit.entity.Player;
 import xyz.oribuin.eternalparkour.manager.LocaleManager;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
+import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
-import xyz.oribuin.eternalparkour.parkour.edit.EditType;
+import xyz.oribuin.eternalparkour.parkour.edit.EditSession;
 
-public class AddRegionCommand extends RoseSubCommand {
+public class DelCheckpointCommand extends RoseSubCommand {
 
-    public AddRegionCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
+    public DelCheckpointCommand(RosePlugin rosePlugin, RoseCommandWrapper parent) {
         super(rosePlugin, parent);
     }
 
@@ -26,19 +27,31 @@ public class AddRegionCommand extends RoseSubCommand {
 
         LocaleManager locale = this.rosePlugin.getManager(LocaleManager.class);
         ParkourManager manager = this.rosePlugin.getManager(ParkourManager.class);
+        EditSession session = manager.getLevelEditors().get(player.getUniqueId());
 
-        if (manager.startEditing(player, level, EditType.ADD_REGION))
-            locale.sendMessage(player, "command-edit-add-region-start", StringPlaceholders.single("name", level.getId()));
+        if (level == null) {
+            if (session == null) {
+                locale.sendMessage(player, "argument-handler-level");
+                return;
+            }
+
+            level = session.getLevel();
+        }
+
+        Checkpoint checkpoint = level.getCheckpoint(player.getLocation());
+        if (checkpoint == null) {
+            locale.sendMessage(player, "command-edit-del-checkpoint-fail");
+            return;
+        }
+
+        level.getCheckpoints().remove(checkpoint.getId());
+        level.reorganizeCheckpoints();
+        locale.sendMessage(player, "command-edit-del-checkpoint-success", StringPlaceholders.single("name", level.getId()));
     }
 
     @Override
     protected String getDefaultName() {
-        return "addregion";
-    }
-
-    @Override
-    public boolean isPlayerOnly() {
-        return true;
+        return null;
     }
 
 }
