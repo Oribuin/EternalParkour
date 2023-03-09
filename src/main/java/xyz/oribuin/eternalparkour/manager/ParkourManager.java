@@ -838,7 +838,7 @@ public class ParkourManager extends Manager {
         this.dataManager.cacheUser(data);
 
         // Send fail message here
-        this.activeRunners.remove(pplayer);
+        this.activeRunners.remove(player.getUniqueId());
         if (level.getTeleport() != null)
             this.teleport(player, level.getTeleport());
     }
