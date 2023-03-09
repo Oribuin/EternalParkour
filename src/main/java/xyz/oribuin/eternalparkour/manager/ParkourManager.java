@@ -190,11 +190,11 @@ public class ParkourManager extends Manager {
                     Checkpoint checkpoint = new Checkpoint(checkpointNumber);
 
                     // Teleport location
-                    double x = checkpoints.getDouble(checkpointKey + ".x");
-                    double y = checkpoints.getDouble(checkpointKey + ".y");
-                    double z = checkpoints.getDouble(checkpointKey + ".z");
-                    double yaw = checkpoints.getDouble(checkpointKey + ".yaw");
-                    double pitch = checkpoints.getDouble(checkpointKey + ".pitch");
+                    double x = checkpoints.getDouble(checkpointKey + ".teleport.x");
+                    double y = checkpoints.getDouble(checkpointKey + ".teleport.y");
+                    double z = checkpoints.getDouble(checkpointKey + ".teleport.z");
+                    double yaw = checkpoints.getDouble(checkpointKey + ".teleport.yaw");
+                    double pitch = checkpoints.getDouble(checkpointKey + ".teleport.pitch");
 
                     Location teleport = new Location(spawnWorld, x, y, z, (float) yaw, (float) pitch);
                     checkpoint.setTeleport(teleport);
@@ -356,24 +356,24 @@ public class ParkourManager extends Manager {
         level.getCheckpoints().forEach((id, checkpoint) -> {
             Region region = checkpoint.getRegion();
             if (region != null && region.getPos1() != null && region.getPos2() != null) {
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-1.x", region.getPos1().getX());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-1.y", region.getPos1().getY());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-1.z", region.getPos1().getZ());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-1.x", region.getPos1().getX());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-1.y", region.getPos1().getY());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-1.z", region.getPos1().getZ());
 
                 // Save the second position
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-2.x", region.getPos2().getX());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-2.y", region.getPos2().getY());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".regions.pos-2.z", region.getPos2().getZ());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-2.x", region.getPos2().getX());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-2.y", region.getPos2().getY());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".region.pos-2.z", region.getPos2().getZ());
             }
 
             if (checkpoint.getTeleport() != null) {
                 Location teleport = checkpoint.getTeleport();
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".world", teleport.getWorld().getName());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".x", teleport.getX());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".y", teleport.getY());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".z", teleport.getZ());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".yaw", teleport.getYaw());
-                this.levelConfig.set(startPath + ".checkpoints." + id + ".pitch", teleport.getPitch());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.world", teleport.getWorld().getName());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.x", teleport.getX());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.y", teleport.getY());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.z", teleport.getZ());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.yaw", teleport.getYaw());
+                this.levelConfig.set(startPath + ".checkpoints." + id + ".teleport.pitch", teleport.getPitch());
             }
         });
 
@@ -875,18 +875,16 @@ public class ParkourManager extends Manager {
         }
 
         // Teleport the player back to the checkpoint if they have one
-        if (session.getCheckpoint() != null) {
+        if (session.getCheckpoint() != null && level.getCheckpoints().size() > 0) {
             session.setAttempts(session.getAttempts() + 1);
             this.activeRunners.put(player.getUniqueId(), session);
 
-            Checkpoint previous = session.getLevel().getPreviousCheckpoint(session.getCheckpoint().getId());
-            if (level.getCheckpoints().size() > 0 && previous != null) {
-                // This is redundant, but it's here because intellij was complaining
-                if (previous.getTeleport() != null)
-                    this.teleport(player, PluginUtils.asCenterLoc(previous.getTeleport(), player.getLocation().getYaw(), player.getLocation().getPitch()));
+            Checkpoint current = session.getCheckpoint();
+            // This is redundant, but it's here because intellij was complaining
+            if (current.getTeleport() != null)
+                this.teleport(player, PluginUtils.asCenterLoc(current.getTeleport(), player.getLocation().getYaw(), player.getLocation().getPitch()));
 
-                return;
-            }
+            return;
         }
 
         // Update the player's data
@@ -980,7 +978,8 @@ public class ParkourManager extends Manager {
      * @param level  The level
      * @param type   The type of edit
      */
-    public boolean startEditing(@NotNull Player player, @Nullable Level level, @NotNull EditType type) {
+    @Nullable
+    public Level startEditing(@NotNull Player player, @Nullable Level level, @NotNull EditType type) {
         ParkourPlayer pplayer = this.getPPlayer(player);
         EditSession session = this.levelEditors.get(player.getUniqueId());
 
@@ -991,14 +990,14 @@ public class ParkourManager extends Manager {
         if (level == null) {
             if (session == null) {
                 this.rosePlugin.getManager(LocaleManager.class).sendMessage(player, "argument-handler-level");
-                return false;
+                return null;
             }
 
             level = session.getLevel();
         }
 
         this.levelEditors.put(player.getUniqueId(), new EditSession(level, type));
-        return true;
+        return level;
     }
 
     /**

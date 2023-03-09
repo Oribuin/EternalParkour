@@ -1,7 +1,6 @@
 package xyz.oribuin.eternalparkour.listener;
 
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,8 +10,6 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.event.PlayerEnterRegionEvent;
 import xyz.oribuin.eternalparkour.event.PlayerExitRegionEvent;
-import xyz.oribuin.eternalparkour.event.PlayerFinishLevelEvent;
-import xyz.oribuin.eternalparkour.event.PlayerStartLevelEvent;
 import xyz.oribuin.eternalparkour.event.PlayerSwitchRegionEvent;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Checkpoint;
@@ -20,9 +17,6 @@ import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * This is where we handle all the events for deciding when a player is entering or exiting a region.
@@ -71,7 +65,7 @@ public class RegionListeners implements Listener {
                 if (region == null)
                     return;
 
-                this.manager.cancelRun(player, false);
+                this.manager.failRun(player);
                 this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, region, from));
                 return;
             }
@@ -93,7 +87,7 @@ public class RegionListeners implements Listener {
 
         // Signify that a player has left a region.
         if (region == null && fromRegion != null && this.manager.isPlaying(player.getUniqueId())) {
-            this.manager.cancelRun(player, false);
+            this.manager.cancelRun(player, true);
             this.plugin.getServer().getPluginManager().callEvent(new PlayerExitRegionEvent(player, fromRegion, level));
         }
 
