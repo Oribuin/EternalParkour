@@ -25,7 +25,7 @@ public class TeleportCommand extends RoseCommand {
 
         RunSession session = manager.getRunSession(player.getUniqueId());
         if (session == null) {
-            locale.sendMessage(player, "command-teleport-not-playing");
+            locale.sendMessage(player, "parkour-not-playing");
             return;
         }
 

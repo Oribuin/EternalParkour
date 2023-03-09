@@ -120,12 +120,12 @@ public class EnglishLocale implements Locale {
 
             this.put("#24", "Restart Command");
             this.put("command-restart-description", "Restart a level.");
-            this.put("command-restart-not-playing", "You are not currently playing a level.");
             this.put("command-restart-success", "You have restarted the level [#00B4DB%level%&f].");
 
             this.put("#25", "Teleport Command");
             this.put("command-teleport-description", "Teleport back to your last checkpoint.");
-            this.put("command-teleport-not-playing", "You are not currently playing a level.");
+            this.put("command-teleport-success", "You have teleported back to your last checkpoint.");
+
 
             this.put("#26", "General Parkour Messages");
             this.put("region-not-found", "You are not in the correct region to do this.");
@@ -133,6 +133,7 @@ public class EnglishLocale implements Locale {
             this.put("parkour-finish-new-best", "You have beat your person best for [#00B4DB%level%&f] in #00B4DB%time%&f! Your previous best was #00B4DB%best%&f.");
             this.put("parkour-max-attempts", "You have reached the maximum number of attempts for [#00B4DB%level%&f] (%attempts%/%max_attempts%).");
             this.put("parkour-max-completions", "You have reached the maximum number of completions for [#00B4DB%level%&f] (%completions%/%max_completions%).");
+            this.put("parkour-not-playing", "You are not currently playing a level.");
 
             this.put("#27", "Argument Handler Messages");
             this.put("argument-handler-level", "Parkour Level [%input%] doesn't exist.");
