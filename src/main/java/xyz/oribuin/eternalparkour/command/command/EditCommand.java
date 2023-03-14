@@ -12,6 +12,7 @@ import xyz.oribuin.eternalparkour.command.command.edit.AddFinishCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.AddRegionCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.AddStartCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.AddCheckpointCommand;
+import xyz.oribuin.eternalparkour.command.command.edit.CheckpointStartCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelCheckpointCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelFinishCommand;
 import xyz.oribuin.eternalparkour.command.command.edit.DelRegionCommand;
@@ -29,6 +30,7 @@ public class EditCommand extends RoseCommand {
                 AddFinishCommand.class,
                 AddRegionCommand.class,
                 AddStartCommand.class,
+                CheckpointStartCommand.class,
                 DelCheckpointCommand.class,
                 DelFinishCommand.class,
                 DelRegionCommand.class,

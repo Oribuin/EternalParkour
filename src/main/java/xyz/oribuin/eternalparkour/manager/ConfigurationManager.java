@@ -15,6 +15,8 @@ public class ConfigurationManager extends AbstractConfigurationManager {
         // General Settings
         GENERAL("general", null, "These are all the general settings for EternalParkour."),
         GENERAL_TELEPORT_ON_FINISH("general.teleport-on-finish", true, "Should the player be teleported to the start region when they finish a level?"),
+        GENERAL_CHECKPOINT_SOUND_ENABLED("general.checkpoint-sound.enabled", true, "Should the checkpoint sound be played when a player reaches a checkpoint?"),
+        GENERAL_CHECKPOINT_SOUND("general.checkpoint-sound.sound", "ENTITY_ARROW_HIT_PLAYER", "The sound to play when a player reaches a checkpoint."),
 
         // Leaderboard Settings
         LEADERBOARD("leaderboard", null, "These are all the options for creating ."),

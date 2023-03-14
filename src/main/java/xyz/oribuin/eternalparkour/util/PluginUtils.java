@@ -131,4 +131,23 @@ public final class PluginUtils {
         }
     }
 
+    /**
+     * Get an enum from a string value
+     *
+     * @param enumClass The enum class
+     * @param name      The name of the enum
+     * @param <T>       The enum type
+     * @return The enum
+     */
+    public static <T extends Enum<T>> T getEnum(Class<T> enumClass, String name) {
+        for (T t : enumClass.getEnumConstants()) {
+            if (t.name().equalsIgnoreCase(name)) {
+                return t;
+            }
+        }
+
+        return null;
+    }
+
+
 }

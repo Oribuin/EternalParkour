@@ -11,12 +11,14 @@ import xyz.oribuin.eternalparkour.EternalParkour;
 import xyz.oribuin.eternalparkour.event.PlayerEnterRegionEvent;
 import xyz.oribuin.eternalparkour.event.PlayerExitRegionEvent;
 import xyz.oribuin.eternalparkour.event.PlayerSwitchRegionEvent;
+import xyz.oribuin.eternalparkour.manager.ConfigurationManager.Setting;
 import xyz.oribuin.eternalparkour.manager.ParkourManager;
 import xyz.oribuin.eternalparkour.parkour.Checkpoint;
 import xyz.oribuin.eternalparkour.parkour.Level;
 import xyz.oribuin.eternalparkour.parkour.Region;
 import xyz.oribuin.eternalparkour.parkour.RunSession;
 import xyz.oribuin.eternalparkour.parkour.edit.EditType;
+import xyz.oribuin.eternalparkour.util.PluginUtils;
 
 /**
  * This is where we handle all the events for deciding when a player is entering or exiting a region.
@@ -115,13 +117,19 @@ public class RegionListeners implements Listener {
                     return;
                 }
 
-                player.playSound(player, Sound.ENTITY_ARROW_HIT_PLAYER, 100, 1);
+                if (Setting.GENERAL_CHECKPOINT_SOUND_ENABLED.getBoolean()) {
+                    Sound sound = PluginUtils.getEnum(Sound.class, Setting.GENERAL_CHECKPOINT_SOUND.getString());
+                    if (sound == null)
+                        sound = Sound.ENTITY_ARROW_HIT_PLAYER;
+
+                    player.playSound(player, sound, 100, 1);
+                }
+
                 session.setCheckpoint(checkpoint);
                 this.manager.saveRunSession(session);
                 return;
             }
         }
-
 
 
         // Check if the player is going from parkour region -> finish region.
